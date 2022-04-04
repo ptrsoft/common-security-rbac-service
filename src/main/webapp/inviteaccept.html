@@ -1,0 +1,111 @@
+
+<html>
+	<head>
+		<title>Invitation</title>
+		<meta charset="UTF-8">
+		<meta name="description" content="" />
+		<meta name="keywords" content="" />
+		<link rel="stylesheet" href="border.css">
+		<link href="webjars/bootstrap/3.3.6/css/bootstrap.min.css" rel="stylesheet">
+		<script src="webjars/jquery/2.2.1/jquery.min.js"></script>
+		<script src="webjars/bootstrap/3.3.6/js/bootstrap.min.js"></script>
+		
+	</head>
+	<script type="text/javascript">
+		$(document).ready(
+				function() {
+					var searchParams = new URLSearchParams(window.location.search);
+					var invCode = searchParams.get('activation_code');
+					var form = new FormData();
+					form.append("inviteCode", invCode);
+					
+					var settings = {
+						  "url": "/security/users/acceptInvite",
+						  "method": "POST",
+						  "timeout": 0,
+						  "processData": false,
+						  "mimeType": "multipart/form-data",
+						  "contentType": false,
+						  "data": form
+					};
+					
+					$.ajax(settings)
+						.done(function (response) {
+						  	$("#success").show();
+						  	$("#successLogin").show();
+							$("#fail").hide();
+						})
+						.fail(function(data){
+						  console.log(data);	
+						  $("#success").hide();
+						  $("#successLogin").hide();
+						  $("#fail").show();
+						});
+				}
+			);
+	</script>
+
+	<body>
+	    <div id="success" class="frame1">
+	        <h1>SYNECTIKS</h1>
+	        <h2>Your invitation has been accepted. To login, please click on the link given below </h2></div>
+			<div id="successLogin" class="frame1">
+				<a href="http://100.64.107.25:3000" >Login</a>
+			</div>
+	    </div>
+	    <div id="fail" class="frame1">
+	        <h1>SYNECTIKS</h1>
+	        <h2>User authentication failed. Invitation cannot be accepted</h2></div>
+			
+	    </div>
+	</body>
+
+</html>
+<style>
+.button {
+  background-color: rgb(71, 151, 212);
+  border: none;
+  color: white;
+  padding: 10px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  margin: 4px 2px;
+  cursor: pointer;
+  width: 249px;
+  
+}
+.button4 {border-radius: 12px;}
+
+.logo{
+
+}
+h1,h4{
+    font-family: "berkshire-swash";
+    color: rgb(71, 151, 212);
+}
+.frame{ 
+    position: relative;
+    padding: 10px;
+  margin-left: 234px;
+    color: rgba(0, 0, 0, 0.56);
+    text-shadow: 0px 0px 5px rgba(0,0,0,0.2);
+    
+   margin-bottom: -13px;
+
+    background-color: rgba(0, 0, 0, 0);
+}
+.frame1{ 
+    position: relative;
+    padding: 10px;
+    text-align: center;
+    color: rgba(0, 0, 0, 0.56);
+    text-shadow: 0px 0px 5px rgba(0,0,0,0.2);
+    margin: auto;
+
+
+    background-color: rgba(0, 0, 0, 0);
+}
+
+</style>
