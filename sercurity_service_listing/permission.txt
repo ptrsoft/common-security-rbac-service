@@ -1,0 +1,49 @@
+[
+	'{{repeat(5)}}',
+	{
+		"guid": "{{uuid()}}",
+		"name": "{{random("Percentage CPU","CPU Credits", "Network In", "Disk Read Bytes", "Power Off Machine")}}",
+		"type":"alert",
+		"createdon": "2020-11-06T02:27:41.882Z",
+		"updatedon":"2020-11-06T07:26:09.870Z",
+		"user":"Automated",	
+		"alert_state": "Closed"
+	}
+]
+[
+	'{{repeat(3)}}',
+	{
+		"guid": "{{uuid()}}",
+		"name": "{{random("Percentage CPU","CPU Credits", "Network In", "Disk Read Bytes", "Power Off Machine")}}",
+		"type":"alert",
+		"createdon": "2020-11-06T02:27:41.882Z",
+		"updatedon":"2020-11-06T07:26:09.870Z",
+		"user":"Automated"	
+	}
+]
+
+[
+	'{{repeat(5)}}',
+	{
+		"guid": "{{uuid()}}",
+		"name": "{{random("Percentage CPU","CPU Credits", "Network In", "Disk Read Bytes", "Power Off Machine")}}",
+		"severity": "{{random("urgent","critical", "high", "medium", "low")}}",
+		"monitorcondition": "{{random("Fired")}}",
+		"affectedresource": "{{random("Prod_DB_SYN14","Prod_Service_20")}}",
+		"monitorservice": "{{random("Native AWS","Native AZURE","Synectiks")}}",
+		"signaltype": "{{random("Metrics", "Logs")}}",
+		"brcsubscription": "{{random("Alert Management")}}",
+		"suppressionstate": "{{random("None", "Archive", "Silence", "DeDup")}}",
+        "resourcegroup": "Compute",
+		"resources": "{{random("Node", "Database", "Storage", "App")}}",
+		"firedtime": "03/06/2020, 1596616397872",
+		"createdon": "2020-10-29 9:35:08.791",
+	    "updatedon": "2020-10-29 12:35:08.791",
+	    "alert_state": "{{random("New", "InProgress", "Closed")}}",
+		"client": "Random Data Generator",
+		"client_url": "http://localhost:3000/d/6hVzaKOMk/alerttest?tab=alert&editPanel=2&orgId=1&removeOptions=1",
+		"description": "",
+		"details": "Triggered metrics:\n\nA-series: 27.912\n",
+		"incident_key": "alertId-1"
+	}	
+]

@@ -1,0 +1,4 @@
+{
+    "xformation-servicedesk-ui-plugin":["CreateLink-TicketPlugin","CreateTicket-TicketPlugin","CreateEmail-TicketPlugin","CreateContact-TicketPlugin","CreateCompany-TicketPlugin","CreateAgent-TicketPlugin"],
+    "xformation-rbac-ui-plugin":["Permissions","Roles","Groups","Users"]
+}

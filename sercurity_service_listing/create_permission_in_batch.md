@@ -1,0 +1,2025 @@
+
+[GO Back](./api_flow.md)
+
+Request
+
+```
+        curl --location --request POST 'localhost:8095/security/permissions/createPermissionInBatch' \
+        --header 'Content-Type: application/json' \
+        --data-raw '{
+            "xformation-servicedesk-ui-plugin": [
+                {
+                    "permission": "commancomponent-createbuttoncomponent-createbtn",
+                    "description": "permission for '\''create button'\'' at '\''domain\\CommanComponents\\CreateButtonComponent.tsx'\''"
+                },
+                {
+                    "permission": "commancomponent-createbuttoncomponent-ticketbtn",
+                    "description": "permission for '\''create ticket dropdown'\'' at '\''domain\\CommanComponents\\CreateButtonComponent.tsx'\''"
+                },
+                {
+                    "permission": "commancomponent-createbuttoncomponent-emailbtn",
+                    "description": "permission for '\''create email dropdown'\'' at '\''domain\\CommanComponents\\CreateButtonComponent.tsx'\''"
+                },
+                {
+                    "permission": "commancomponent-createbuttoncomponent-contactbtn",
+                    "description": "permission for '\''add new contact dropdown'\'' at '\''domain\\CommanComponents\\CreateButtonComponent.tsx'\''"
+                },
+                {
+                    "permission": "commancomponent-createbuttoncomponent-companytbtn",
+                    "description": "permission for '\''add new company dropdown'\'' at '\''domain\\CommanComponents\\CreateButtonComponent.tsx'\''"
+                },
+                {
+                    "permission": "commancomponent-createbuttoncomponent-agentbtn",
+                    "description": "permission for '\''add new agent dropdown'\'' at '\''domain\\CommanComponents\\CreateButtonComponent.tsx'\''"
+                }
+            ],
+            "xformation-alertmanager-ui-plugin": [
+                {
+                    "permission": "manage-alert-rule",
+                    "description": "Permissions of '\''Manage Alert Rule'\'' Button of MonitorAlert\\index.txt"
+                },
+                {
+                    "permission": "manage-workflows",
+                    "description": "Permissions of '\''Manage Workflows'\'' Button of MonitorAlert\\index.txt"
+                },
+                {
+                    "permission": "managealertrule-index-ruletbl-editbtn",
+                    "description": "Permission for '\''edit rule action button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'\''"
+                },
+                {
+                    "permission": "managealertrule-index-ruletbl-deletebtn",
+                    "description": "Permission for '\''delete rule action button'\'' at '\''xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'\''"
+                },
+                {
+                    "permission": "managealertrule-index-scripttbl-editbtn",
+                    "description": "Permission for '\''edit script action button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'\''"
+                },
+                {
+                    "permission": "managealertrule-index-scripttbl-deletebtn",
+                    "description": "Permission for '\''delete script action button'\'' at '\''xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'\''"
+                },
+                {
+                    "permission": "managealertrule-index-createalertrulebtn",
+                    "description": "Permission for '\''Create Alert Rule'\'' button at '\''xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'\''"
+                },
+                {
+                    "permission": "managealertrule-index-writescriptbtn",
+                    "description": "Permission for '\''Write Script'\'' button at '\''xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'\''"
+                },
+                {
+                    "permission": "rules-index-newalertrulebtn",
+                    "description": "Permission for '\''New Alert Rule'\'' button at '\''xformation-alertmanager-ui-plugin\\src\\domain\\rules\\index.tsx'\''"
+                },
+                {
+                    "permission": "rules-index-editbtn",
+                    "description": "Permission for '\''edit action button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\rules\\index.tsx'\''"
+                },
+                {
+                    "permission": "rules-index-deletebtn",
+                    "description": "Permission for '\''delete action button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\rules\\index.tsx'\''"
+                },
+                {
+                    "permission": "allalerts-index-alerttbl-editbtn",
+                    "description": "Permission for '\''edit action'\'' button at '\''xformation-alertmanager-ui-plugin\\src\\domain\\AllAlerts\\index.tsx'\''"
+                },
+                {
+                    "permission": "allalerts-index-alerttbl-deletebtn",
+                    "description": "Permission for '\''delete action button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\AllAlerts\\index.tsx'\''"
+                },
+                {
+                    "permission": "allalerts-index-alerttbl-createticketbtn",
+                    "description": "Permission for '\''create ticket action button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\AllAlerts\\index.tsx'\''"
+                },
+                {
+                    "permission": "allalerts-index-alerttbl-silencebtn",
+                    "description": "Permission for '\''alert silence action button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\AllAlerts\\index.tsx'\''"
+                },
+                {
+                    "permission": "alltickets-index-createticketbtn",
+                    "description": "Permission for '\''create ticket button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\AllTickets\\index.tsx'\''"
+                },
+                {
+                    "permission": "alltickets-index-tickettbl-editbtn",
+                    "description": "Permission for '\''table edit action button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\AllTickets\\index.tsx'\''"
+                },
+                {
+                    "permission": "alltickets-index-tickettbl-deletebtn",
+                    "description": "Permission for '\''table delete button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\AllTickets\\index.tsx'\''"
+                },
+                {
+                    "permission": "alltickets-index-tickettbl-startec2btn",
+                    "description": "Permission for '\''table start ec2 button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\AllTickets\\index.tsx'\''"
+                },
+                {
+                    "permission": "alltickets-index-tickettbl-startec2withpromptbtn",
+                    "description": "Permission for '\''table start-ec2-with-prompt-action-btn button'\''  at '\''xformation-alertmanager-ui-plugin\\src\\domain\\AllTickets\\index.tsx'\''"
+                }
+            ],
+            "xformation-perfmanager-ui-plugin": [
+                {
+                    "permission": "catalog-topmenu-manangedashboardsbtn",
+                    "description": "Permissions of '\''Manage Dashboards'\'' Button of '\''xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'\''"
+                },
+                {
+                    "permission": "catalog-topmenu-catlogbtn",
+                    "description": "Permissions of '\''Catalog'\'' Button of '\''xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'\''"
+                },
+                {
+                    "permission": "catalog-topmenu-librarybtn",
+                    "description": "Permissions of '\''Library'\'' Button of '\''xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'\''"
+                },
+                {
+                    "permission": "catalog-topmenu-collectionbtn",
+                    "description": "Permissions of '\''Collection'\'' Button of '\''xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'\''"
+                },
+                {
+                    "permission": "catalog-topmenu-rulebtn",
+                    "description": "Permissions of '\''Rule'\'' Button of '\''xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'\''"
+                },
+                {
+                    "permission": "catalog-topmenu-preferencesbtn",
+                    "description": "Permissions of '\''Rule'\'' Button of '\''xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'\''"
+                },
+                {
+                    "permission": "managedashboard-managetab-newdashboardbtn",
+                    "description": "Permissions of '\''New Dashboard'\'' Button of '\''xformation-perfmanager-ui-plugin\\src\\domain\\ManageDashboard\\ManageTab.tsx'\''"
+                },
+                {
+                    "permission": "managedashboard-managetab-newfolderbtn",
+                    "description": "Permission for '\''New Folder'\'' button at '\''xformation-perfmanager-ui-plugin\\src\\domain\\ManageDashboard\\ManageTab.tsx'\''"
+                },
+                {
+                    "permission": "managedashboard-managetab-importbtn",
+                    "description": "Permission for '\''Import'\'' button at '\''xformation-perfmanager-ui-plugin\\src\\domain\\ManageDashboard\\ManageTab.tsx'\''"
+                },
+                {
+                    "permission": "managedashboard-newplaylist-createnewplaylistbtn",
+                    "description": "Permission for '\''create new Playlist'\'' Button of '\''xformation-perfmanager-ui-plugin\\src\\domain\\ManageDashboard\\NewPlayList.tsx'\''"
+                },
+                {
+                    "permission": "library-index-addfolderbtn",
+                    "description": "Permission for '\''add folder'\'' of  '\''xformation-perfmanager-ui-plugin\\src\\domain\\Library\\index.tsx'\''"
+                },
+                {
+                    "permission": "collectionview-index-collectiontbl-edtbtn",
+                    "description": "Permission for '\''edit '\'' action button of '\''xformation-perfmanager-ui-plugin\\src\\domain\\CollectionView\\index.tsx'\''"
+                },
+                {
+                    "permission": "collectionview-index-collectiontbl-edtbtn",
+                    "description": "Permission for '\''delete'\'' action button  of '\''xformation-perfmanager-ui-plugin\\src\\domain\\CollectionView\\index.tsx'\''"
+                },
+                {
+                    "permission": "collectionview-index-collectiontbl-plusbtn",
+                    "description": "Permission for '\''plus '\'' action Button  of '\''xformation-perfmanager-ui-plugin\\src\\domain\\CollectionView\\index.tsx'\''"
+                },
+                {
+                    "permission": "collectionview-index-collectiontbl-ellipsisbtn",
+                    "description": "Permission for '\''ellipsis'\'' action button of '\''xformation-perfmanager-ui-plugin\\src\\domain\\CollectionView\\index.tsx'\''"
+                }
+            ],
+            "xformation-rbac-ui-plugin": [
+                {
+                    "permission": "rolepermission-index-permissions",
+                    "description": "permission for '\''permission tab or tab content'\'' at '\''xformation-rbac-ui-plugin\\src\\domain\\application\\RolesPermission\\index.tsx'\''"
+                },
+                {
+                    "permission": "rolepermission-index-roles",
+                    "description": "permission for '\''roles tab or tab content'\'' at '\''xformation-rbac-ui-plugin\\src\\domain\\application\\RolesPermission\\index.tsx'\''"
+                },
+                {
+                    "permission": "rolepermission-index-groups",
+                    "description": "permission for '\''groups tab or tab content'\'' at '\''xformation-rbac-ui-plugin\\src\\domain\\application\\RolesPermission\\index.tsx'\''"
+                },
+                {
+                    "permission": "rolepermission-index-users",
+                    "description": "permission for '\''users tab or tab content'\'' at '\''xformation-rbac-ui-plugin\\src\\domain\\application\\RolesPermission\\index.tsx'\''"
+                }
+            ],
+            "grafana-ui": [
+                {
+                    "permission": "overview",
+                    "description": ""
+                },
+                {
+                    "permission": "activity-log",
+                    "description": ""
+                },
+                {
+                    "permission": "alerts",
+                    "description": ""
+                },
+                {
+                    "permission": "alert-manager-dashboard",
+                    "description": ""
+                },
+                {
+                    "permission": "new-alert-rule",
+                    "description": ""
+                },
+                {
+                    "permission": "all-alert-rule",
+                    "description": ""
+                },
+                {
+                    "permission": "metrics",
+                    "description": ""
+                },
+                {
+                    "permission": "metrics-catalog",
+                    "description": ""
+                },
+                {
+                    "permission": "metrics-library",
+                    "description": ""
+                },
+                {
+                    "permission": "metrics-collection",
+                    "description": ""
+                },
+                {
+                    "permission": "metrics-rule",
+                    "description": ""
+                },
+                {
+                    "permission": "metrics-preferences",
+                    "description": ""
+                },
+                {
+                    "permission": "grafana-logs",
+                    "description": ""
+                },
+                {
+                    "permission": "service-health",
+                    "description": ""
+                },
+                {
+                    "permission": "compliance",
+                    "description": ""
+                },
+                {
+                    "permission": "compliance-dashboard",
+                    "description": ""
+                },
+                {
+                    "permission": "compliance-rulesets",
+                    "description": ""
+                },
+                {
+                    "permission": "compliance-builder",
+                    "description": ""
+                },
+                {
+                    "permission": "compliance-remediation",
+                    "description": ""
+                },
+                {
+                    "permission": "compliance-assessment-history",
+                    "description": ""
+                },
+                {
+                    "permission": "compliance-exclusions",
+                    "description": ""
+                },
+                {
+                    "permission": "compliance-policies",
+                    "description": ""
+                },
+                {
+                    "permission": "tickets",
+                    "description": ""
+                },
+                {
+                    "permission": "tickets-dashboard",
+                    "description": ""
+                },
+                {
+                    "permission": "tickets-contacts",
+                    "description": ""
+                },
+                {
+                    "permission": "tickets-companies",
+                    "description": ""
+                },
+                {
+                    "permission": "tickets-reports",
+                    "description": ""
+                },
+                {
+                    "permission": "tickets-preferences",
+                    "description": ""
+                },
+                {
+                    "permission": "applications",
+                    "description": ""
+                },
+                {
+                    "permission": "virtual-machines",
+                    "description": ""
+                },
+                {
+                    "permission": "networks",
+                    "description": ""
+                },
+                {
+                    "permission": "jobs",
+                    "description": ""
+                },
+                {
+                    "permission": "diagnostic-settings",
+                    "description": ""
+                },
+                {
+                    "permission": "rbac-settings",
+                    "description": ""
+                },
+                {
+                    "permission": "virtual-machines",
+                    "description": ""
+                },
+                {
+                    "permission": "networks",
+                    "description": ""
+                }
+            ]
+        }'
+```
+
+# Response 
+```
+                [
+                {
+                    "id": 1,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Team",
+                    "permission": "Team",
+                    "description": "Team menu"
+                },
+                {
+                    "id": 8,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Overview",
+                    "permission": "Overview",
+                    "description": "Overview menu"
+                },
+                {
+                    "id": 9,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Assets",
+                    "permission": "Assets",
+                    "description": "Assets menu"
+                },
+                {
+                    "id": 10,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Environments",
+                    "permission": "Environments",
+                    "description": "Environments sub menu of Assets"
+                },
+                {
+                    "id": 11,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Discovered Assets",
+                    "permission": "Discovered Assets",
+                    "description": "Discovered assets sub menu of Assets"
+                },
+                {
+                    "id": 12,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Monitored Assets",
+                    "permission": "Monitored Assets",
+                    "description": "Monitored assets sub menu of Assets"
+                },
+                {
+                    "id": 13,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Org Unit",
+                    "permission": "Org Unit",
+                    "description": "Org unit sub menu of Assets"
+                },
+                {
+                    "id": 14,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Custom-Resources",
+                    "permission": "Custom-Resources",
+                    "description": "Custom-Resources sub menu of Assets"
+                },
+                {
+                    "id": 15,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "App Catalogue",
+                    "permission": "App Catalogue",
+                    "description": "App Catalogue menu"
+                },
+                {
+                    "id": 16,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "View And Search Catalogue",
+                    "permission": "View And Search Catalogue",
+                    "description": "View And Search Catalogue sub menu of App Catalogue menu"
+                },
+                {
+                    "id": 17,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Library",
+                    "permission": "Library",
+                    "description": "Library sub menu of App Catalogue menu"
+                },
+                {
+                    "id": 18,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Import Assets From Module Pack",
+                    "permission": "Import Assets From Module Pack",
+                    "description": "Import Assets From Module Pack sub menu of App Catalogue menu"
+                },
+                {
+                    "id": 19,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Create Or Import Module Packs",
+                    "permission": "Create Or Import Module Packs",
+                    "description": "Create Or Import Module Packs sub menu of App Catalogue menu"
+                },
+                {
+                    "id": 20,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Events",
+                    "permission": "Events",
+                    "description": "Events menu"
+                },
+                {
+                    "id": 21,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Dashboard",
+                    "permission": "Dashboard",
+                    "description": "Dashboard sub menu of Events menu"
+                },
+                {
+                    "id": 22,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "New Alert Rule",
+                    "permission": "New Alert Rule",
+                    "description": "New Alert Rule sub menu of Events menu"
+                },
+                {
+                    "id": 23,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "All Alert Rules",
+                    "permission": "All Alert Rules",
+                    "description": "All Alerts Rule sub menu of Events menu"
+                },
+                {
+                    "id": 24,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Manage Alert Rule",
+                    "permission": "Manage Alert Rule",
+                    "description": "Manage Alert Rule sub menu of Events menu"
+                },
+                {
+                    "id": 25,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Manage Workflows",
+                    "permission": "Manage Workflows",
+                    "description": "Manage Workflows sub menu of Events menu"
+                },
+                {
+                    "id": 26,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Analytics",
+                    "permission": "Analytics",
+                    "description": "Analytics menu"
+                },
+                {
+                    "id": 27,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Manage Dashboards",
+                    "permission": "Manage Dashboards",
+                    "description": "Manage Dashboards sub menu of Analytics menu"
+                },
+                {
+                    "id": 28,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Manage Views",
+                    "permission": "Manage Views",
+                    "description": "Manage Views sub menu of Analytics menu"
+                },
+                {
+                    "id": 29,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Task Manager",
+                    "permission": "Task Manager",
+                    "description": "Task Manager sub menu of Analytics menu"
+                },
+                {
+                    "id": 30,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Performance & Availability",
+                    "permission": "Performance & Availability",
+                    "description": "Performance & Availability menu"
+                },
+                {
+                    "id": 31,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Dashboard",
+                    "permission": "Dashboard",
+                    "description": "Dashboard sub menu of Performance & Availability menu"
+                },
+                {
+                    "id": 32,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Collection",
+                    "permission": "Collection",
+                    "description": "Collection sub menu of Performance & Availability menu"
+                },
+                {
+                    "id": 33,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Rule",
+                    "permission": "Rule",
+                    "description": "Rule sub menu of Performance & Availability menu"
+                },
+                {
+                    "id": 34,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Preferences",
+                    "permission": "Preferences",
+                    "description": "Preferences sub menu of Performance & Availability menu"
+                },
+                {
+                    "id": 35,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Discovery",
+                    "permission": "Discovery",
+                    "description": "Discovery sub menu of Performance & Availability menu"
+                },
+                {
+                    "id": 36,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "View",
+                    "permission": "View",
+                    "description": "View sub menu of Performance & Availability menu"
+                },
+                {
+                    "id": 37,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Logs",
+                    "permission": "Logs",
+                    "description": "Logs menu"
+                },
+                {
+                    "id": 38,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Overview",
+                    "permission": "Overview",
+                    "description": "Overview sub menu of Logs menu"
+                },
+                {
+                    "id": 39,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Dashboard",
+                    "permission": "Dashboard",
+                    "description": "Dashboard sub menu of Logs menu"
+                },
+                {
+                    "id": 40,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Alerts",
+                    "permission": "Alerts",
+                    "description": "Alerts sub menu of Logs menu"
+                },
+                {
+                    "id": 41,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Preferences",
+                    "permission": "Preferences",
+                    "description": "Preferences sub menu of Logs menu"
+                },
+                {
+                    "id": 42,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Preference",
+                    "permission": "Preference",
+                    "description": "Preference sub menu of Logs menu"
+                },
+                {
+                    "id": 43,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Compliance",
+                    "permission": "Compliance",
+                    "description": "Compliance menu"
+                },
+                {
+                    "id": 44,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Overview",
+                    "permission": "Overview",
+                    "description": "Overview sub menu of Compliance menu"
+                },
+                {
+                    "id": 45,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Rulesets",
+                    "permission": "Rulesets",
+                    "description": "Rulesets sub menu of Compliance menu"
+                },
+                {
+                    "id": 46,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Rule Builder",
+                    "permission": "Rule Builder",
+                    "description": "Rule Builder sub menu of Compliance menu"
+                },
+                {
+                    "id": 47,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Audits",
+                    "permission": "Audits",
+                    "description": "Audits sub menu of Compliance menu"
+                },
+                {
+                    "id": 48,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Policies",
+                    "permission": "Policies",
+                    "description": "Policies sub menu of Compliance menu"
+                },
+                {
+                    "id": 49,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Remediation",
+                    "permission": "Remediation",
+                    "description": "Remediation sub menu of Compliance menu"
+                },
+                {
+                    "id": 50,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Assessment History",
+                    "permission": "Assessment History",
+                    "description": "Assessment History sub menu of Compliance menu"
+                },
+                {
+                    "id": 51,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Exclusions",
+                    "permission": "Exclusions",
+                    "description": "Exclusions sub menu of Compliance menu"
+                },
+                {
+                    "id": 52,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Preference",
+                    "permission": "Preference",
+                    "description": "Preference sub menu of Compliance menu"
+                },
+                {
+                    "id": 53,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Service desk",
+                    "permission": "Service desk",
+                    "description": "Service desk menu"
+                },
+                {
+                    "id": 54,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Dashboard",
+                    "permission": "Dashboard",
+                    "description": "Dashboard sub menu of Service desk menu"
+                },
+                {
+                    "id": 55,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Contacts",
+                    "permission": "Contacts",
+                    "description": "Contacts sub menu of Service desk menu"
+                },
+                {
+                    "id": 56,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Companies",
+                    "permission": "Companies",
+                    "description": "Companies sub menu of Service desk menu"
+                },
+                {
+                    "id": 57,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Reports",
+                    "permission": "Reports",
+                    "description": "Reports sub menu of Service desk menu"
+                },
+                {
+                    "id": 58,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Preferences",
+                    "permission": "Preferences",
+                    "description": "Preferences sub menu of Service desk menu"
+                },
+                {
+                    "id": 59,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Automation",
+                    "permission": "Automation",
+                    "description": "Automation menu"
+                },
+                {
+                    "id": 60,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Generators",
+                    "permission": "Generators",
+                    "description": "Generators menu"
+                },
+                {
+                    "id": 61,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Delivery",
+                    "permission": "Delivery",
+                    "description": "Delivery menu"
+                },
+                {
+                    "id": 62,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Quality",
+                    "permission": "Quality",
+                    "description": "Quality menu"
+                },
+                {
+                    "id": 63,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Test",
+                    "permission": "Test",
+                    "description": "Test menu"
+                },
+                {
+                    "id": 64,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Change Manager",
+                    "permission": "Change Manager",
+                    "description": "Change Manager menu"
+                },
+                {
+                    "id": 65,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Explorer",
+                    "permission": "Explorer",
+                    "description": "Explorer menu"
+                },
+                {
+                    "id": 66,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "RCA",
+                    "permission": "RCA",
+                    "description": "RCA menu"
+                },
+                {
+                    "id": 67,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Search & Act",
+                    "permission": "Search & Act",
+                    "description": "Search & Act menu"
+                },
+                {
+                    "id": 68,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Script Manager",
+                    "permission": "Script Manager",
+                    "description": "Script Manager menu"
+                },
+                {
+                    "id": 69,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Optimizer",
+                    "permission": "Optimizer",
+                    "description": "Optimizer menu"
+                },
+                {
+                    "id": 70,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Migration Manager",
+                    "permission": "Migration Manager",
+                    "description": "Migration Manager menu"
+                },
+                {
+                    "id": 71,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Preference",
+                    "permission": "Preference",
+                    "description": "Preference menu"
+                },
+                {
+                    "id": 72,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "RBAC Settings",
+                    "permission": "RBAC Settings",
+                    "description": "RBAC Settings menu"
+                },
+                {
+                    "id": 73,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Permissions",
+                    "permission": "Permissions",
+                    "description": "Permissions sub menu of RBAC Settings menu"
+                },
+                {
+                    "id": 74,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Roles",
+                    "permission": "Roles",
+                    "description": "Roles sub menu of RBAC Settings menu"
+                },
+                {
+                    "id": 75,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Groups",
+                    "permission": "Groups",
+                    "description": "Groups sub menu of RBAC Settings menu"
+                },
+                {
+                    "id": 76,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Users",
+                    "permission": "Users",
+                    "description": "Users sub menu of RBAC Settings menu"
+                },
+                {
+                    "id": 77,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": 1,
+                    "name": "Resource",
+                    "permission": "Resource",
+                    "description": "Resource menu"
+                },
+                {
+                    "id": 100,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-servicedesk-ui-plugin",
+                    "permission": "commancomponent-createbuttoncomponent-createbtn",
+                    "description": "permission for 'create button' at 'domain\\CommanComponents\\CreateButtonComponent.tsx'"
+                },
+                {
+                    "id": 101,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-servicedesk-ui-plugin",
+                    "permission": "commancomponent-createbuttoncomponent-ticketbtn",
+                    "description": "permission for 'create ticket dropdown' at 'domain\\CommanComponents\\CreateButtonComponent.tsx'"
+                },
+                {
+                    "id": 102,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-servicedesk-ui-plugin",
+                    "permission": "commancomponent-createbuttoncomponent-emailbtn",
+                    "description": "permission for 'create email dropdown' at 'domain\\CommanComponents\\CreateButtonComponent.tsx'"
+                },
+                {
+                    "id": 103,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-servicedesk-ui-plugin",
+                    "permission": "commancomponent-createbuttoncomponent-contactbtn",
+                    "description": "permission for 'add new contact dropdown' at 'domain\\CommanComponents\\CreateButtonComponent.tsx'"
+                },
+                {
+                    "id": 104,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-servicedesk-ui-plugin",
+                    "permission": "commancomponent-createbuttoncomponent-companytbtn",
+                    "description": "permission for 'add new company dropdown' at 'domain\\CommanComponents\\CreateButtonComponent.tsx'"
+                },
+                {
+                    "id": 105,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-servicedesk-ui-plugin",
+                    "permission": "commancomponent-createbuttoncomponent-agentbtn",
+                    "description": "permission for 'add new agent dropdown' at 'domain\\CommanComponents\\CreateButtonComponent.tsx'"
+                },
+                {
+                    "id": 106,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "manage-alert-rule",
+                    "description": "Permissions of 'Manage Alert Rule' Button of MonitorAlert\\index.txt"
+                },
+                {
+                    "id": 107,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "manage-workflows",
+                    "description": "Permissions of 'Manage Workflows' Button of MonitorAlert\\index.txt"
+                },
+                {
+                    "id": 108,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "managealertrule-index-ruletbl-editbtn",
+                    "description": "Permission for 'edit rule action button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'"
+                },
+                {
+                    "id": 109,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "managealertrule-index-ruletbl-deletebtn",
+                    "description": "Permission for 'delete rule action button' at 'xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'"
+                },
+                {
+                    "id": 110,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "managealertrule-index-scripttbl-editbtn",
+                    "description": "Permission for 'edit script action button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'"
+                },
+                {
+                    "id": 111,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "managealertrule-index-scripttbl-deletebtn",
+                    "description": "Permission for 'delete script action button' at 'xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'"
+                },
+                {
+                    "id": 112,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "managealertrule-index-createalertrulebtn",
+                    "description": "Permission for 'Create Alert Rule' button at 'xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'"
+                },
+                {
+                    "id": 113,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "managealertrule-index-writescriptbtn",
+                    "description": "Permission for 'Write Script' button at 'xformation-alertmanager-ui-plugin\\src\\domain\\ManageAlertRule\\index.tsx'"
+                },
+                {
+                    "id": 114,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "rules-index-newalertrulebtn",
+                    "description": "Permission for 'New Alert Rule' button at 'xformation-alertmanager-ui-plugin\\src\\domain\\rules\\index.tsx'"
+                },
+                {
+                    "id": 115,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "rules-index-editbtn",
+                    "description": "Permission for 'edit action button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\rules\\index.tsx'"
+                },
+                {
+                    "id": 116,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "rules-index-deletebtn",
+                    "description": "Permission for 'delete action button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\rules\\index.tsx'"
+                },
+                {
+                    "id": 117,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "allalerts-index-alerttbl-editbtn",
+                    "description": "Permission for 'edit action' button at 'xformation-alertmanager-ui-plugin\\src\\domain\\AllAlerts\\index.tsx'"
+                },
+                {
+                    "id": 118,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "allalerts-index-alerttbl-deletebtn",
+                    "description": "Permission for 'delete action button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\AllAlerts\\index.tsx'"
+                },
+                {
+                    "id": 119,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "allalerts-index-alerttbl-createticketbtn",
+                    "description": "Permission for 'create ticket action button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\AllAlerts\\index.tsx'"
+                },
+                {
+                    "id": 120,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "allalerts-index-alerttbl-silencebtn",
+                    "description": "Permission for 'alert silence action button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\AllAlerts\\index.tsx'"
+                },
+                {
+                    "id": 121,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "alltickets-index-createticketbtn",
+                    "description": "Permission for 'create ticket button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\AllTickets\\index.tsx'"
+                },
+                {
+                    "id": 122,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "alltickets-index-tickettbl-editbtn",
+                    "description": "Permission for 'table edit action button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\AllTickets\\index.tsx'"
+                },
+                {
+                    "id": 123,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "alltickets-index-tickettbl-deletebtn",
+                    "description": "Permission for 'table delete button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\AllTickets\\index.tsx'"
+                },
+                {
+                    "id": 124,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "alltickets-index-tickettbl-startec2btn",
+                    "description": "Permission for 'table start ec2 button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\AllTickets\\index.tsx'"
+                },
+                {
+                    "id": 125,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-alertmanager-ui-plugin",
+                    "permission": "alltickets-index-tickettbl-startec2withpromptbtn",
+                    "description": "Permission for 'table start-ec2-with-prompt-action-btn button'  at 'xformation-alertmanager-ui-plugin\\src\\domain\\AllTickets\\index.tsx'"
+                },
+                {
+                    "id": 126,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "catalog-topmenu-manangedashboardsbtn",
+                    "description": "Permissions of 'Manage Dashboards' Button of 'xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'"
+                },
+                {
+                    "id": 127,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "catalog-topmenu-catlogbtn",
+                    "description": "Permissions of 'Catalog' Button of 'xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'"
+                },
+                {
+                    "id": 128,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "catalog-topmenu-librarybtn",
+                    "description": "Permissions of 'Library' Button of 'xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'"
+                },
+                {
+                    "id": 129,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "catalog-topmenu-collectionbtn",
+                    "description": "Permissions of 'Collection' Button of 'xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'"
+                },
+                {
+                    "id": 130,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "catalog-topmenu-rulebtn",
+                    "description": "Permissions of 'Rule' Button of 'xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'"
+                },
+                {
+                    "id": 131,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "catalog-topmenu-preferencesbtn",
+                    "description": "Permissions of 'Rule' Button of 'xformation-perfmanager-ui-plugin\\src\\domain\\Catalog\\TopMenu.tsx'"
+                },
+                {
+                    "id": 132,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "managedashboard-managetab-newdashboardbtn",
+                    "description": "Permissions of 'New Dashboard' Button of 'xformation-perfmanager-ui-plugin\\src\\domain\\ManageDashboard\\ManageTab.tsx'"
+                },
+                {
+                    "id": 133,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "managedashboard-managetab-newfolderbtn",
+                    "description": "Permission for 'New Folder' button at 'xformation-perfmanager-ui-plugin\\src\\domain\\ManageDashboard\\ManageTab.tsx'"
+                },
+                {
+                    "id": 134,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "managedashboard-managetab-importbtn",
+                    "description": "Permission for 'Import' button at 'xformation-perfmanager-ui-plugin\\src\\domain\\ManageDashboard\\ManageTab.tsx'"
+                },
+                {
+                    "id": 135,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "managedashboard-newplaylist-createnewplaylistbtn",
+                    "description": "Permission for 'create new Playlist' Button of 'xformation-perfmanager-ui-plugin\\src\\domain\\ManageDashboard\\NewPlayList.tsx'"
+                },
+                {
+                    "id": 136,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "library-index-addfolderbtn",
+                    "description": "Permission for 'add folder' of  'xformation-perfmanager-ui-plugin\\src\\domain\\Library\\index.tsx'"
+                },
+                {
+                    "id": 137,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "collectionview-index-collectiontbl-edtbtn",
+                    "description": "Permission for 'edit ' action button of 'xformation-perfmanager-ui-plugin\\src\\domain\\CollectionView\\index.tsx'"
+                },
+                {
+                    "id": 138,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "collectionview-index-collectiontbl-edtbtn",
+                    "description": "Permission for 'delete' action button  of 'xformation-perfmanager-ui-plugin\\src\\domain\\CollectionView\\index.tsx'"
+                },
+                {
+                    "id": 139,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "collectionview-index-collectiontbl-plusbtn",
+                    "description": "Permission for 'plus ' action Button  of 'xformation-perfmanager-ui-plugin\\src\\domain\\CollectionView\\index.tsx'"
+                },
+                {
+                    "id": 140,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-perfmanager-ui-plugin",
+                    "permission": "collectionview-index-collectiontbl-ellipsisbtn",
+                    "description": "Permission for 'ellipsis' action button of 'xformation-perfmanager-ui-plugin\\src\\domain\\CollectionView\\index.tsx'"
+                },
+                {
+                    "id": 141,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-rbac-ui-plugin",
+                    "permission": "rolepermission-index-permissions",
+                    "description": "permission for 'permission tab or tab content' at 'xformation-rbac-ui-plugin\\src\\domain\\application\\RolesPermission\\index.tsx'"
+                },
+                {
+                    "id": 142,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-rbac-ui-plugin",
+                    "permission": "rolepermission-index-roles",
+                    "description": "permission for 'roles tab or tab content' at 'xformation-rbac-ui-plugin\\src\\domain\\application\\RolesPermission\\index.tsx'"
+                },
+                {
+                    "id": 143,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-rbac-ui-plugin",
+                    "permission": "rolepermission-index-groups",
+                    "description": "permission for 'groups tab or tab content' at 'xformation-rbac-ui-plugin\\src\\domain\\application\\RolesPermission\\index.tsx'"
+                },
+                {
+                    "id": 144,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "xformation-rbac-ui-plugin",
+                    "permission": "rolepermission-index-users",
+                    "description": "permission for 'users tab or tab content' at 'xformation-rbac-ui-plugin\\src\\domain\\application\\RolesPermission\\index.tsx'"
+                },
+                {
+                    "id": 145,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "overview",
+                    "description": ""
+                },
+                {
+                    "id": 146,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "activity-log",
+                    "description": ""
+                },
+                {
+                    "id": 147,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "alerts",
+                    "description": ""
+                },
+                {
+                    "id": 148,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "alert-manager-dashboard",
+                    "description": ""
+                },
+                {
+                    "id": 149,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "new-alert-rule",
+                    "description": ""
+                },
+                {
+                    "id": 150,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "all-alert-rule",
+                    "description": ""
+                },
+                {
+                    "id": 151,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "metrics",
+                    "description": ""
+                },
+                {
+                    "id": 152,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "metrics-catalog",
+                    "description": ""
+                },
+                {
+                    "id": 153,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "metrics-library",
+                    "description": ""
+                },
+                {
+                    "id": 154,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "metrics-collection",
+                    "description": ""
+                },
+                {
+                    "id": 155,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "metrics-rule",
+                    "description": ""
+                },
+                {
+                    "id": 156,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "metrics-preferences",
+                    "description": ""
+                },
+                {
+                    "id": 157,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "grafana-logs",
+                    "description": ""
+                },
+                {
+                    "id": 158,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "service-health",
+                    "description": ""
+                },
+                {
+                    "id": 159,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "compliance",
+                    "description": ""
+                },
+                {
+                    "id": 160,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "compliance-dashboard",
+                    "description": ""
+                },
+                {
+                    "id": 161,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "compliance-rulesets",
+                    "description": ""
+                },
+                {
+                    "id": 162,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "compliance-builder",
+                    "description": ""
+                },
+                {
+                    "id": 163,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "compliance-remediation",
+                    "description": ""
+                },
+                {
+                    "id": 164,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "compliance-assessment-history",
+                    "description": ""
+                },
+                {
+                    "id": 165,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "compliance-exclusions",
+                    "description": ""
+                },
+                {
+                    "id": 166,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "compliance-policies",
+                    "description": ""
+                },
+                {
+                    "id": 167,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "tickets",
+                    "description": ""
+                },
+                {
+                    "id": 168,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "tickets-dashboard",
+                    "description": ""
+                },
+                {
+                    "id": 169,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "tickets-contacts",
+                    "description": ""
+                },
+                {
+                    "id": 170,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "tickets-companies",
+                    "description": ""
+                },
+                {
+                    "id": 171,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "tickets-reports",
+                    "description": ""
+                },
+                {
+                    "id": 172,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "tickets-preferences",
+                    "description": ""
+                },
+                {
+                    "id": 173,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "applications",
+                    "description": ""
+                },
+                {
+                    "id": 174,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "virtual-machines",
+                    "description": ""
+                },
+                {
+                    "id": 175,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "networks",
+                    "description": ""
+                },
+                {
+                    "id": 176,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "jobs",
+                    "description": ""
+                },
+                {
+                    "id": 177,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "diagnostic-settings",
+                    "description": ""
+                },
+                {
+                    "id": 178,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "rbac-settings",
+                    "description": ""
+                },
+                {
+                    "id": 179,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "virtual-machines",
+                    "description": ""
+                },
+                {
+                    "id": 180,
+                    "createdAt": null,
+                    "updatedAt": null,
+                    "createdBy": null,
+                    "updatedBy": null,
+                    "version": null,
+                    "name": "grafana-ui",
+                    "permission": "networks",
+                    "description": ""
+                }
+            ]
+```
+
+[GO Back](./api_flow.md)
