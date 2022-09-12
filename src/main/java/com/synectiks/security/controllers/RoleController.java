@@ -76,10 +76,10 @@ public class RoleController implements IApiController {
 
 	@Override
 	@RequestMapping(IConsts.API_FIND_ID)
-	public ResponseEntity<Object> findById(@PathVariable("id") String id) {
+	public ResponseEntity<Object> findById(@PathVariable("id") Long id) {
 		Role entity = null;
 		try {
-			entity = repository.findById(Long.parseLong(id)).orElse(null);
+			entity = repository.findById(id).orElse(null);
 		} catch (Throwable th) {
 			logger.error(th.getMessage(), th);
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
@@ -89,9 +89,9 @@ public class RoleController implements IApiController {
 
 	@Override
 	@RequestMapping(IConsts.API_DELETE_ID)
-	public ResponseEntity<Object> deleteById(@PathVariable("id") String id) {
+	public ResponseEntity<Object> deleteById(@PathVariable("id") Long id) {
 		try {
-			repository.deleteById(Long.parseLong(id));
+			repository.deleteById(id);
 		} catch (Throwable th) {
 			logger.error(th.getMessage(), th);
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
@@ -120,9 +120,11 @@ public class RoleController implements IApiController {
 	@RequestMapping(IConsts.API_DELETE)
 	public ResponseEntity<Object> delete(@RequestBody ObjectNode entity) {
 		if (!IUtils.isNull(entity.get(IDBConsts.Col_ID))) {
-			return deleteById(entity.get(IDBConsts.Col_ID).asText());
+			return deleteById(entity.get(IDBConsts.Col_ID).asLong());
 		}
 		return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED)
 				.body("Not a valid entity");
 	}
+
+	
 }

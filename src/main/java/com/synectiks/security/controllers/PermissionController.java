@@ -79,7 +79,7 @@ public class PermissionController implements IApiController {
 
 	@Override
 	@RequestMapping(IConsts.API_FIND_ID)
-	public ResponseEntity<Object> findById(@PathVariable("id") String id) {
+	public ResponseEntity<Object> findById(@PathVariable("id") Long id) {
 		Permission entity = null;
 		try {
 			entity = repository.findById(id).orElse(null);
@@ -92,7 +92,7 @@ public class PermissionController implements IApiController {
 
 	@Override
 	@RequestMapping(IConsts.API_DELETE_ID)
-	public ResponseEntity<Object> deleteById(@PathVariable("id") String id) {
+	public ResponseEntity<Object> deleteById(@PathVariable("id") Long id) {
 		try {
 			repository.deleteById(id);
 		} catch (Throwable th) {
@@ -121,7 +121,7 @@ public class PermissionController implements IApiController {
 	@RequestMapping(IConsts.API_DELETE)
 	public ResponseEntity<Object> delete(@RequestBody ObjectNode entity) {
 		if (!IUtils.isNull(entity.get(IDBConsts.Col_ID))) {
-			return deleteById(entity.get(IDBConsts.Col_ID).asText());
+			return deleteById(entity.get(IDBConsts.Col_ID).asLong());
 		}
 		return ResponseEntity.status(HttpStatus.PRECONDITION_FAILED).body("Not a valid entity");
 	}
@@ -183,4 +183,6 @@ public class PermissionController implements IApiController {
 //		}
 		return null;
 	}
+
+	
 }

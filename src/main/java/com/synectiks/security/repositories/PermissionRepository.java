@@ -12,6 +12,6 @@ import com.synectiks.security.entities.Permission;
  * @author Rajesh
  */
 @Repository
-public interface PermissionRepository extends CrudRepository<Permission, String> {
+public interface PermissionRepository extends CrudRepository<Permission, Long> {
 
 }
