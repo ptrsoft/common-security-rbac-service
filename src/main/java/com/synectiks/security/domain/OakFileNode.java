@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.synectiks.commons.entities.oak;
+package com.synectiks.security.domain;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -18,7 +18,7 @@ import org.apache.jackrabbit.ocm.manager.atomictypeconverter.impl.BinaryTypeConv
 import org.apache.jackrabbit.ocm.mapper.impl.annotation.Field;
 import org.apache.jackrabbit.ocm.mapper.impl.annotation.Node;
 
-import com.synectiks.commons.utils.IUtils;
+import com.synectiks.security.util.IUtils;
 
 /**
  * @author Rajesh

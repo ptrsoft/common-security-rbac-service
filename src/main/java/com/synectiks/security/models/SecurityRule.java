@@ -4,8 +4,8 @@
 package com.synectiks.security.models;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.synectiks.commons.interfaces.IApiController;
-import com.synectiks.commons.utils.IUtils;
+import com.synectiks.security.interfaces.IApiController;
+import com.synectiks.security.util.IUtils;
 
 /**
  * @author Rajesh

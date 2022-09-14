@@ -19,8 +19,8 @@ import org.springframework.context.ConfigurableApplicationContext;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.core.env.Environment;
 
-import com.synectiks.commons.utils.IUtils;
 import com.synectiks.security.config.Constants;
+import com.synectiks.security.util.IUtils;
 
 import io.github.jhipster.config.JHipsterConstants;
 

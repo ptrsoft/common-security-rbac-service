@@ -9,9 +9,9 @@ import javax.persistence.FetchType;
 import javax.persistence.ManyToMany;
 import javax.persistence.Table;
 
-import com.synectiks.commons.constants.IConsts;
-import com.synectiks.commons.constants.IDBConsts;
-import com.synectiks.commons.entities.PSqlEntity;
+import com.synectiks.security.config.IConsts;
+import com.synectiks.security.config.IDBConsts;
+import com.synectiks.security.domain.PSqlEntity;
 
 /**
  * @author Rajesh

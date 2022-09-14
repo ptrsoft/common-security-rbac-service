@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.synectiks.commons.entities;
+package com.synectiks.security.domain;
 
 import java.io.Serializable;
 

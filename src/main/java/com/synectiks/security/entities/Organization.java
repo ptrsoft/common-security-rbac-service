@@ -12,7 +12,7 @@ import javax.persistence.Transient;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.synectiks.commons.entities.PSqlEntity;
+import com.synectiks.security.domain.PSqlEntity;
 
 /**
  * A Organization.

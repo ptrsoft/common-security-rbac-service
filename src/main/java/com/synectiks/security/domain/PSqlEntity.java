@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.synectiks.commons.entities;
+package com.synectiks.security.domain;
 
 import java.io.Serializable;
 import java.util.Date;
@@ -14,7 +14,7 @@ import javax.persistence.Inheritance;
 import javax.persistence.InheritanceType;
 import javax.persistence.SequenceGenerator;
 
-import com.synectiks.commons.utils.IUtils;
+import com.synectiks.security.util.IUtils;
 
 /**
  * @author Rajesh

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.synectiks.commons.entities;
+package com.synectiks.security.domain;
 
 import java.util.List;
 
@@ -11,7 +11,7 @@ import javax.persistence.Table;
 
 import org.codehaus.jettison.json.JSONArray;
 
-import com.synectiks.commons.constants.IDBConsts;
+import com.synectiks.security.config.IDBConsts;
 
 /**
  * Class to hold and translate Search Response into application class.

@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.synectiks.commons.utils;
+package com.synectiks.security.util;
 
 import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
@@ -94,11 +94,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
 import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
-import com.synectiks.commons.constants.IConsts;
-import com.synectiks.commons.entities.PolicyRuleResult;
-import com.synectiks.commons.entities.SurveyEntity;
-import com.synectiks.commons.entities.dynamodb.Entity;
-import com.synectiks.commons.entities.oak.OakFileNode;
+import com.synectiks.security.config.IConsts;
+import com.synectiks.security.domain.Entity;
+import com.synectiks.security.domain.OakFileNode;
+import com.synectiks.security.domain.PolicyRuleResult;
+import com.synectiks.security.domain.SurveyEntity;
 
 /**
  * @author Rajesh

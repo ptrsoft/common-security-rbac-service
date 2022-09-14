@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.synectiks.commons.constants;
+package com.synectiks.security.config;
 
 /**
  * @author Rajesh

@@ -20,12 +20,12 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.synectiks.commons.constants.IConsts;
-import com.synectiks.commons.constants.IDBConsts;
-import com.synectiks.commons.interfaces.IApiController;
-import com.synectiks.commons.utils.IUtils;
+import com.synectiks.security.config.IConsts;
+import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.entities.Role;
+import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.repositories.RoleRepository;
+import com.synectiks.security.util.IUtils;
 
 /**
  * @author Rajesh

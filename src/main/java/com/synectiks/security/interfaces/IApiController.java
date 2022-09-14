@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.synectiks.commons.interfaces;
+package com.synectiks.security.interfaces;
 
 import java.util.List;
 
@@ -9,10 +9,10 @@ import javax.servlet.http.HttpServletRequest;
 
 import org.springframework.http.ResponseEntity;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.synectiks.commons.constants.IConsts;
-import com.synectiks.commons.entities.SurveyEntity;
-import com.synectiks.commons.entities.dynamodb.Entity;
-import com.synectiks.commons.utils.IUtils;
+import com.synectiks.security.config.IConsts;
+import com.synectiks.security.domain.Entity;
+import com.synectiks.security.domain.SurveyEntity;
+import com.synectiks.security.util.IUtils;
 
 /**
  * @author Rajesh

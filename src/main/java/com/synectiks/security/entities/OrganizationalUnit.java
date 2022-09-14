@@ -10,7 +10,7 @@ import javax.persistence.Table;
 import javax.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
-import com.synectiks.commons.entities.PSqlEntity;
+import com.synectiks.security.domain.PSqlEntity;
 
 /**
  * A OrganizationalUnit.

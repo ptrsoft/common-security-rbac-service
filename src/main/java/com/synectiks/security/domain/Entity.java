@@ -1,7 +1,7 @@
 /**
  * 
  */
-package com.synectiks.commons.entities.dynamodb;
+package com.synectiks.security.domain;
 
 import java.io.Serializable;
 import java.util.Date;

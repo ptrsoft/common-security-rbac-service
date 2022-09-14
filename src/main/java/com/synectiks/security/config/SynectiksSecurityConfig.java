@@ -23,8 +23,8 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
-import com.synectiks.commons.utils.IUtils;
 import com.synectiks.security.models.SecurityRule;
+import com.synectiks.security.util.IUtils;
 
 /**
  * @author Rajesh

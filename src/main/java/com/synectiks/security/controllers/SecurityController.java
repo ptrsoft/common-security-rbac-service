@@ -31,16 +31,16 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.synectiks.commons.interfaces.IApiController;
-import com.synectiks.commons.utils.IUtils;
 import com.synectiks.security.config.Constants;
 import com.synectiks.security.entities.Organization;
 import com.synectiks.security.entities.User;
+import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.mfa.GoogleMultiFactorAuthenticationService;
 import com.synectiks.security.models.AuthInfo;
 import com.synectiks.security.models.LoginRequest;
 import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.UserRepository;
+import com.synectiks.security.util.IUtils;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 
 /**

@@ -12,10 +12,10 @@ import java.util.Map;
 
 import org.apache.shiro.authc.AuthenticationInfo;
 
-import com.synectiks.commons.utils.IUtils;
 import com.synectiks.security.entities.Permission;
 import com.synectiks.security.entities.Role;
 import com.synectiks.security.entities.User;
+import com.synectiks.security.util.IUtils;
 
 /**
  * @author Rajesh

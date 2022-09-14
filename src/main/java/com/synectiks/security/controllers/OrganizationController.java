@@ -21,10 +21,10 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
-import com.synectiks.commons.interfaces.IApiController;
 import com.synectiks.security.entities.Organization;
 import com.synectiks.security.entities.OrganizationalUnit;
 import com.synectiks.security.entities.User;
+import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.OrganizationalUnitRepository;
 import com.synectiks.security.repositories.UserRepository;
