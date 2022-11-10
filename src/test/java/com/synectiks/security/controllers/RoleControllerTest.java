@@ -37,7 +37,7 @@ import com.synectiks.security.web.rest.AccountResource;
 import com.synectiks.security.web.rest.TestUtil;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@WebMvcTest(value = RoleController.class, secure = false)
+@WebMvcTest(value = RoleController.class)
 @ContextConfiguration(locations =  {"classpath*:/application-context.xml"})
 class RoleControllerTest {
 
@@ -85,7 +85,7 @@ class RoleControllerTest {
             String outputInJson = response.getContentAsString();
             assertEquals(HttpStatus.OK.value(), response.getStatus());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "test", roles = "ADMIN")
 	public void listAllTest() throws IOException, Exception {
@@ -104,7 +104,7 @@ class RoleControllerTest {
             String outputInJson = response.getContentAsString();
             assertEquals(HttpStatus.OK.value(), response.getStatus());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "test", roles = "ADMIN")
 	public void findByIdTest() throws IOException, Exception {
@@ -123,7 +123,7 @@ class RoleControllerTest {
             String outputInJson = response.getContentAsString();
             assertEquals(HttpStatus.OK.value(), response.getStatus());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "test", roles = "ADMIN")
 	public void deleteByIdTest() throws IOException, Exception {
@@ -143,7 +143,7 @@ class RoleControllerTest {
             String outputInJson = response.getContentAsString();
             assertEquals(HttpStatus.OK.value(), response.getStatus());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "test", roles = "ADMIN")
 	public void updateTest() throws IOException, Exception {
@@ -163,7 +163,7 @@ class RoleControllerTest {
             String outputInJson = response.getContentAsString();
             assertEquals(HttpStatus.OK.value(), response.getStatus());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "test", roles = "ADMIN")
 	public void deleteTest() throws IOException, Exception {

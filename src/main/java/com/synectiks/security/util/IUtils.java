@@ -1,46 +1,24 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.util;
 
-import java.io.BufferedOutputStream;
-import java.io.BufferedReader;
-import java.io.ByteArrayInputStream;
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
-import java.io.Reader;
-import java.nio.file.Files;
-import java.nio.file.attribute.BasicFileAttributes;
-import java.text.DateFormat;
-import java.text.ParseException;
-import java.text.SimpleDateFormat;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collection;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
-import java.util.Map.Entry;
-import java.util.Objects;
-import java.util.Optional;
-import java.util.StringTokenizer;
-
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-
+import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
+import com.fasterxml.jackson.annotation.PropertyAccessor;
+import com.fasterxml.jackson.core.JsonGenerator;
+import com.fasterxml.jackson.core.JsonParser;
+import com.fasterxml.jackson.databind.DeserializationFeature;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.SerializationFeature;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
+import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
+import com.synectiks.security.config.IConsts;
+import com.synectiks.security.domain.Entity;
+import com.synectiks.security.domain.OakFileNode;
+import com.synectiks.security.domain.PolicyRuleResult;
+import com.synectiks.security.domain.SurveyEntity;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.time.DateUtils;
@@ -68,37 +46,29 @@ import org.elasticsearch.common.xcontent.XContentBuilder;
 import org.elasticsearch.common.xcontent.XContentFactory;
 import org.elasticsearch.search.SearchHit;
 import org.elasticsearch.search.SearchHits;
-import org.junit.Assert;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
-import org.springframework.http.ResponseEntity;
+import org.springframework.http.*;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.annotation.JsonAutoDetect.Visibility;
-import com.fasterxml.jackson.annotation.PropertyAccessor;
-import com.fasterxml.jackson.core.JsonGenerator;
-import com.fasterxml.jackson.core.JsonParser;
-import com.fasterxml.jackson.databind.DeserializationFeature;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.SerializationFeature;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
-import com.fasterxml.jackson.datatype.jsr310.deser.LocalDateDeserializer;
-import com.fasterxml.jackson.datatype.jsr310.ser.LocalDateSerializer;
-import com.synectiks.security.config.IConsts;
-import com.synectiks.security.domain.Entity;
-import com.synectiks.security.domain.OakFileNode;
-import com.synectiks.security.domain.PolicyRuleResult;
-import com.synectiks.security.domain.SurveyEntity;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.*;
+import java.nio.file.Files;
+import java.nio.file.attribute.BasicFileAttributes;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
+import java.util.Map.Entry;
 
 /**
  * @author Rajesh
@@ -296,7 +266,7 @@ public interface IUtils {
 				} else {
 					type = CTypes.String;
 				}
-			}*/ else { 
+			}*/ else {
 				// Unknown and default type
 				type = CTypes.String;
 			}
@@ -719,7 +689,11 @@ public interface IUtils {
 	 */
 	static String sendMultiPartPostReq(String url, Map<String, Object> params,
 			Map<String, File> files) throws Exception {
-		Assert.assertNotNull("Rest multipart post request url must not be null", url);
+//		Assert.assertNotNull("Rest multipart post request url must not be null", url);
+        if(StringUtils.isBlank(url)){
+            logger.error("Rest multipart post request url must not be null");
+            return null;
+        }
 		String res = null;
 		HttpPost post = new HttpPost(url);
 		CloseableHttpClient client = HttpClientBuilder.create().build();
@@ -854,7 +828,7 @@ public interface IUtils {
 	 */
 	static Object sendPostReq(String url, Map<String, String> headers,
 			Map<String, Object> params) throws Exception {
-		Assert.assertNotNull("Rest post request url must not be null", url);
+//		Assert.assertNotNull("Rest post request url must not be null", url);
 		String input = getStringFromValue(params);
 		return sendPostJsonDataReq(url, headers, input);
 	}
@@ -870,7 +844,11 @@ public interface IUtils {
 	static Object sendPostJsonDataReq(String url, Map<String, String> headers,
 			String input) throws Exception {
 
-		Assert.assertNotNull("Rest post request url must not be null", url);
+//		Assert.assertNotNull("Rest post request url must not be null", url);
+        if(StringUtils.isBlank(url)){
+            logger.error("Rest post request url must not be null");
+            return null;
+        }
 		Object res = null;
 		CloseableHttpClient client = HttpClientBuilder.create().build();
 		HttpPost post = new HttpPost(url);
@@ -937,7 +915,11 @@ public interface IUtils {
 	 */
 	static String sendGetRestReq(String url, Map<String, String> headers,
 			Map<String, Object> params) throws Exception {
-		Assert.assertNotNull("Rest get request url must not be null", url);
+//		Assert.assertNotNull("Rest get request url must not be null", url);
+        if(StringUtils.isBlank(url)){
+            logger.error("Rest get request url must not be null");
+            return null;
+        }
 		String res = null;
 		// add params if any
 		String uri = addParamsInUrl(url, params);
@@ -1574,7 +1556,7 @@ public interface IUtils {
 	 * Method to merge src and tar values for output value.
 	 * @param src
 	 * @param tar
-	 * @param isNested 
+	 * @param isNested
 	 * @return
 	 */
 	static Object getMergedValue(Object src, Object tar, boolean isNested) {
@@ -1720,7 +1702,7 @@ public interface IUtils {
 
 	/**
 	 * Method to extract hit elastic search ids.
-	 * @param res 
+	 * @param res
 	 * @param hits
 	 * @return
 	 */
@@ -1737,7 +1719,7 @@ public interface IUtils {
 
 	/**
 	 * Method to extract hit elastic search ids.
-	 * @param res 
+	 * @param res
 	 * @param hits
 	 * @return
 	 */
@@ -1757,7 +1739,7 @@ public interface IUtils {
 	/**
 	 * Method to copy properties into new SearchHitsResponse object.
 	 * @param sRes
-	 * @param asPSR 
+	 * @param asPSR
 	 * @return
 	 */
 	static PolicyRuleResult createFromSearchResponse(

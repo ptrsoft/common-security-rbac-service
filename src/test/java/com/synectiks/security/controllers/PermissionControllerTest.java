@@ -37,7 +37,7 @@ import com.synectiks.security.web.rest.AccountResource;
 import com.synectiks.security.web.rest.TestUtil;
 
 @RunWith(SpringJUnit4ClassRunner.class)
-@WebMvcTest(value = PermissionController.class, secure = false)
+@WebMvcTest(value = PermissionController.class)
 @ContextConfiguration(locations =  {"classpath*:/application-context.xml"})
 class PermissionControllerTest {
 
@@ -87,7 +87,7 @@ class PermissionControllerTest {
             String outputInJson = response.getContentAsString();
             assertEquals(HttpStatus.OK.value(), response.getStatus());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "test", roles = "ADMIN")
 	public void listAllTest() throws IOException, Exception {
@@ -106,7 +106,7 @@ class PermissionControllerTest {
             String outputInJson = response.getContentAsString();
             assertEquals(HttpStatus.OK.value(), response.getStatus());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "test", roles = "ADMIN")
 	public void findByIdTest() throws IOException, Exception {
@@ -125,7 +125,7 @@ class PermissionControllerTest {
             String outputInJson = response.getContentAsString();
             assertEquals(HttpStatus.OK.value(), response.getStatus());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "test", roles = "ADMIN")
 	public void deleteByIdTest() throws IOException, Exception {
@@ -145,7 +145,7 @@ class PermissionControllerTest {
             String outputInJson = response.getContentAsString();
             assertEquals(HttpStatus.OK.value(), response.getStatus());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "test", roles = "ADMIN")
 	public void updateTest() throws IOException, Exception {
@@ -165,7 +165,7 @@ class PermissionControllerTest {
             String outputInJson = response.getContentAsString();
             assertEquals(HttpStatus.OK.value(), response.getStatus());
 	}
-	
+
 	@Test
 	@WithMockUser(username = "test", roles = "ADMIN")
 	public void deleteTest() throws IOException, Exception {
