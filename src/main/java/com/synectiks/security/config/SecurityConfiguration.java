@@ -3,7 +3,6 @@ package com.synectiks.security.config;
 import com.synectiks.security.security.*;
 import com.synectiks.security.security.jwt.*;
 
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Import;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.method.configuration.EnableGlobalMethodSecurity;

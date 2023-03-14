@@ -76,10 +76,13 @@ spring:
       ddl-auto: update
     properties:
       hibernate.jdbc.lob.non_contextual_creation: true
+  liquibase:
+    enabled: false
   messages:
     basename: i18n/messages
   main:
     allow-bean-definition-overriding: true
+
   mvc:
     favicon:
       enabled: false
