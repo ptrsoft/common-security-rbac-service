@@ -18,6 +18,7 @@ import javax.persistence.Transient;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+
 import com.synectiks.security.config.Constants;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
@@ -92,7 +93,15 @@ public class User extends PSqlEntity {
     @Transient
     @JsonProperty
 	private List<User> teamList;
-	
+    
+    @Transient
+	@JsonProperty
+	private List<Document> documentList;
+    
+    @Transient
+	@JsonProperty
+	private byte[] profileImage;
+    
     @Transient
     @JsonProperty
 	private boolean isAuthenticatedByUserName = false;
@@ -286,6 +295,22 @@ public class User extends PSqlEntity {
 
 	public void setAuthenticatedByUserName(boolean isAuthenticatedByUserName) {
 		this.isAuthenticatedByUserName = isAuthenticatedByUserName;
+	}
+
+	public byte[] getProfileImage() {
+		return profileImage;
+	}
+
+	public void setProfileImage(byte[] profileImage) {
+		this.profileImage = profileImage;
+	}
+
+	public List<Document> getDocumentList() {
+		return documentList;
+	}
+
+	public void setDocumentList(List<Document> documentList) {
+		this.documentList = documentList;
 	}
 
 

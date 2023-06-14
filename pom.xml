@@ -122,6 +122,12 @@
             <artifactId>googleauth</artifactId>
             <version>1.5.0</version>
         </dependency>
+        <!-- https://mvnrepository.com/artifact/org.springframework/spring-core -->
+		<dependency>
+    		<groupId>org.springframework</groupId>
+    		<artifactId>spring-core</artifactId>
+		</dependency>
+        
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>

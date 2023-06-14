@@ -3,8 +3,13 @@
  */
 package com.synectiks.security.controllers;
 
+import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +37,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.synectiks.security.config.Constants;
+import com.synectiks.security.entities.Document;
 import com.synectiks.security.entities.Organization;
 import com.synectiks.security.entities.User;
 import com.synectiks.security.interfaces.IApiController;
@@ -40,6 +46,7 @@ import com.synectiks.security.models.AuthInfo;
 import com.synectiks.security.models.LoginRequest;
 import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.UserRepository;
+import com.synectiks.security.service.DocumentService;
 import com.synectiks.security.util.IUtils;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 
@@ -64,19 +71,52 @@ public class SecurityController {
 	
 	@Autowired
 	GoogleMultiFactorAuthenticationService googleMultiFactorAuthenticationService;
-
+	@Autowired
+	private DocumentService documentService;
 	@RequestMapping(value = "/login", method = RequestMethod.GET)
 	public ResponseEntity<Object> login(@RequestParam  String username, @RequestParam String password,
-			@RequestParam(required = false) boolean rememberMe) {
+			@RequestParam(required = false) boolean rememberMe) throws IOException {
 		UsernamePasswordToken token = new UsernamePasswordToken();
 		token.setUsername(username);
 		token.setPassword(password.toCharArray());
 		token.setRememberMe(rememberMe);
+
+	
 		return authenticate(token);
 	}
+	private void getDocumentList(User usr) {
+		Map<String, String> requestObj = new HashMap<>();
+		requestObj.put("sourceId", String.valueOf(usr.getId()));
+		List<Document> docList = documentService.searchDocument(requestObj);
+		List<Document> finalDocList = new ArrayList<>();
+		for (Document doc : docList) {
+			if (!doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
+				finalDocList.add(doc);
+			}
+		}
+		usr.setDocumentList(finalDocList);
+
+	}
+	private void setProfileImage(User usr) throws IOException {
+		Map<String, String> requestObj = new HashMap<>();
+		requestObj.put("sourceId", String.valueOf(usr.getId()));
+		List<Document> docList = documentService.searchDocument(requestObj);
+		for (Document doc : docList) {
+			if (doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
+				if (doc.getLocalFilePath() != null) {
+					byte[] bytes = Files.readAllBytes(Paths.get(doc.getLocalFilePath()));
+					usr.setProfileImage(bytes);
+				}
+				break;
+			}
+		}
+
+		
+	}
+
 
 	@RequestMapping(value = "/signup")
-	public String login(@RequestBody LoginRequest request) {
+	public String login(@RequestBody LoginRequest request) throws IOException {
 		UsernamePasswordToken token = new UsernamePasswordToken();
 		token.setUsername(request.getUsername());
 		token.setPassword(request.getPassword().toCharArray());
@@ -89,7 +129,7 @@ public class SecurityController {
 	}
 
 	@RequestMapping(value = "/singin")
-	public ResponseEntity<Object> login(@RequestBody User user) {
+	public ResponseEntity<Object> login(@RequestBody User user) throws IOException {
 		UsernamePasswordToken token = new UsernamePasswordToken();
 		token.setUsername(user.getUsername());
 		token.setPassword(user.getPassword().toCharArray());
@@ -98,7 +138,7 @@ public class SecurityController {
 
 	@RequestMapping(value = "/authenticate")
 	@ResponseBody
-    public ResponseEntity<Object> authenticate(@RequestBody final UsernamePasswordToken token) {
+    public ResponseEntity<Object> authenticate(@RequestBody final UsernamePasswordToken token) throws IOException {
         logger.info("Authenticating {}", token.getUsername());
         final Subject subject = SecurityUtils.getSubject();
         String res = null;
@@ -107,9 +147,12 @@ public class SecurityController {
             subject.login(token);
             AuthenticationInfo info = SecurityUtils.getSecurityManager().authenticate(token);
             User usr = users.findByUsername(token.getUsername());
+     
             if(StringUtils.isBlank(usr.getIsMfaEnable())) {
             	usr.setIsMfaEnable(Constants.NO);
             }
+            getDocumentList(usr);
+			setProfileImage(usr);
             authInfo = AuthInfo.create(info, usr);
             res = IUtils.getStringFromValue(authInfo);
             logger.info(res);
