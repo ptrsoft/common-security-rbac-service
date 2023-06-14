@@ -59,9 +59,9 @@ spring:
   application:
     name: security
   datasource:
-    url: jdbc:postgresql://localhost:5432/security_old
+    url: jdbc:postgresql://postgresql.ch8wfucynpvq.us-east-1.rds.amazonaws.com:5431/security
     username: postgres
-    password: postgres
+    password: P0$tGr3$&s3qua1$n3t!k5
   profiles:
     # The commented value for `active` can be replaced with valid Spring profiles to load.
     # Otherwise, it will be filled in by maven when building the JAR file
@@ -76,13 +76,14 @@ spring:
       ddl-auto: update
     properties:
       hibernate.jdbc.lob.non_contextual_creation: true
-  liquibase:
-    enabled: false
   messages:
     basename: i18n/messages
+  liquibase:
+    # Remove 'faker' if you do not want the sample data to be loaded automatically
+    contexts: dev
+    enabled: false
   main:
     allow-bean-definition-overriding: true
-
   mvc:
     favicon:
       enabled: false

@@ -33,7 +33,7 @@ fi
 
 
 # take variables from environment if set
-SERVICE_JAR=${SERVICE_JAR:=target/security-3.0.0-SNAPSHOT-exec.jar}
+SERVICE_JAR=${SERVICE_JAR:=target/common-security-rbac-service-3.0.0-SNAPSHOT.jar}
 
 SECURITY_PID=${SECURITY_PID:=security_service.pid}
 LOG_FILE=${LOG_FILE:=console.log}
@@ -50,7 +50,7 @@ start() {
     echo "Starting security service ...${JAVA_CMD}"
     #"${NOHUP}" "${JAVA_CMD}" -jar "${SERVICE_JAR}" ${JAVA_OPTS} >> "${LOG_FILE}" 2>> "${LOG_FILE}" &
 	"${NOHUP}" "${JAVA_CMD}" -jar "${SERVICE_JAR}" ${JAVA_OPTS}  >> "${LOG_FILE}" 2>> "${LOG_FILE}" & echo $! > "${SECURITY_PID}"
-	#"${NOHUP}" "${JAVA_CMD}" -jar "${SERVICE_JAR}" ${JAVA_OPTS} > /dev/null 2>&1 & echo $! > "${SECURITY_PID}" 
+	#"${NOHUP}" "${JAVA_CMD}" -jar "${SERVICE_JAR}" ${JAVA_OPTS} > /dev/null 2>&1 & echo $! > "${SECURITY_PID}"
 }
 
 run() {

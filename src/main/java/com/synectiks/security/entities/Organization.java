@@ -51,7 +51,19 @@ public class Organization extends PSqlEntity implements Serializable {
     @JsonProperty
     private List<OrganizationalUnit> organizationalUnitList;
 
-	public String getName() {
+    @Transient
+    @JsonProperty
+    private Long securityServiceOrgId;
+
+    public void setSecurityServiceOrgId(Long securityServiceOrgId) {
+        this.securityServiceOrgId = securityServiceOrgId;
+    }
+
+    public Long getSecurityServiceOrgId() {
+        return securityServiceOrgId;
+    }
+
+    public String getName() {
 		return name;
 	}
 
@@ -129,6 +141,6 @@ public class Organization extends PSqlEntity implements Serializable {
 				+ ", address=" + address + ", fax=" + fax + ", dateOfEstablishment=" + dateOfEstablishment + ", status="
 				+ status + "]";
 	}
-    
-    
+
+
 }
