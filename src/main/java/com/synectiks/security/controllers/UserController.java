@@ -140,7 +140,7 @@ public class UserController implements IApiController {
 			}
 		}
 
-		
+
 	}
 
 	@RequestMapping(IConsts.API_CREATE)
@@ -673,11 +673,8 @@ public class UserController implements IApiController {
 
 		} catch (Exception e) {
 			logger.error("User invite failed. Exception: ", e);
-			Status st = new Status();
-			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-			st.setType("ERROR");
-			st.setMessage("User invite failed");
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User invite failed", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 	}
 
@@ -692,11 +689,8 @@ public class UserController implements IApiController {
 
 			Optional<User> oInvitee = userRepository.findOne(Example.of(invitee));
 			if (!oInvitee.isPresent()) {
-				Status st = new Status();
-				st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-				st.setType("ERROR");
-				st.setMessage("User authentication failed. Invitation cannot be accepted");
-				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+				Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User authentication failed. Invitation cannot be accepted", null);
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 			}
 			invitee = oInvitee.get();
 
@@ -728,22 +722,13 @@ public class UserController implements IApiController {
 			MimeMessage mimeMessage = this.mailService.createHtmlMailMessage(templateData, invitee.getEmail(), subject);
 			this.mailService.sendEmail(mimeMessage);
 			logger.info("User credential mail send");
-
-			Status st = new Status();
-			st.setCode(HttpStatus.OK.value());
-			st.setType("SUCCESS");
-			st.setMessage("Invitation accepted. Login id and password sent to user's email: " + invitee.getEmail());
-			st.setObject(invitee);
-
-			return ResponseEntity.status(HttpStatus.OK).body(st);
+			Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Invitation accepted. Login id and password sent to user's email: " + invitee.getEmail(), invitee);
+            return ResponseEntity.status(HttpStatus.OK).body(st);
 
 		} catch (Exception e) {
 			logger.error("User invite acceptance failed. Exception: ", e);
-			Status st = new Status();
-			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-			st.setType("ERROR");
-			st.setMessage("User invite acceptance failed");
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User invite acceptance failed", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 	}
 
@@ -833,18 +818,11 @@ public class UserController implements IApiController {
 
 		} catch (Throwable th) {
 			logger.error("Exception in getTeam: ", th);
-			Status st = new Status();
-			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-			st.setType("ERROR");
-			st.setMessage("Due to some error, team list cannot be retrieved");
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Due to some error, team list cannot be retrieved", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
-		Status st = new Status();
-		st.setCode(HttpStatus.OK.value());
-		st.setType("SUCCESS");
-		st.setMessage("Team list");
-		st.setObject(user);
-		return ResponseEntity.status(HttpStatus.OK).body(st);
+		Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Team list", user);
+        return ResponseEntity.status(HttpStatus.OK).body(st);
 	}
 
 	@RequestMapping(path = "/enableGoogleMfa")
@@ -855,11 +833,8 @@ public class UserController implements IApiController {
 			User user = userRepository.findByUsername(userName);
 			if (user == null) {
 				logger.error("User not found. User: {}, Organization: {}", userName, organizationName);
-				Status st = new Status();
-				st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-				st.setType("ERROR");
-				st.setMessage("User not found");
-				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+				Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found", null);
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 			}
 
 			user.setIsMfaEnable("YES");
@@ -899,20 +874,12 @@ public class UserController implements IApiController {
 			helper.addInline("qrImage", qrFile);
 			this.mailService.sendEmail(mimeMessage);
 			logger.info("Google mfa enabled. Access key sent in mail.");
-
-			Status st = new Status();
-			st.setCode(HttpStatus.OK.value());
-			st.setType("SUCCESS");
-			st.setMessage("Google mfa is enabled for user: " + userName);
-			st.setObject(user);
-			return ResponseEntity.status(HttpStatus.OK).body(st);
+			Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google mfa is enabled for user: " + userName, user);
+            return ResponseEntity.status(HttpStatus.OK).body(st);
 		} catch (Exception e) {
 			logger.error("Exception in enabling google mfa: ", e);
-			Status st = new Status();
-			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-			st.setType("ERROR");
-			st.setMessage("Exception in enabling google mfa");
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Exception in enabling google mfa", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 	}
 
@@ -925,11 +892,8 @@ public class UserController implements IApiController {
 			User user = userRepository.findByUsername(userName);
 			if (user == null) {
 				logger.error("User not found. User: {}, Organization: {}", userName, organizationName);
-				Status st = new Status();
-				st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-				st.setType("ERROR");
-				st.setMessage("User not found");
-				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+				Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found", null);
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 			}
 
 			user.setIsMfaEnable("NO");
@@ -946,18 +910,11 @@ public class UserController implements IApiController {
 			}
 
 			logger.info("Google mfa is disable for user: {}", userName);
-			Status st = new Status();
-			st.setCode(HttpStatus.OK.value());
-			st.setType("SUCCESS");
-			st.setMessage("Google mfa is disable for user: " + userName);
-			st.setObject(user);
+			Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google mfa is disabled for user: " + userName, user);
 			return ResponseEntity.status(HttpStatus.OK).body(st);
 		} catch (Exception e) {
 			logger.error("Exception in disabling google mfa: ", e);
-			Status st = new Status();
-			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-			st.setType("ERROR");
-			st.setMessage("Exception in disabling google mfa");
+			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Exception in disabling google mfa", null);
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 	}
@@ -968,4 +925,12 @@ public class UserController implements IApiController {
 		return null;
 	}
 
+    private Status setMessage(int stqtusCode, String stausType, String msg, Object obj){
+        Status st = new Status();
+        st.setCode(stqtusCode);
+        st.setType(stausType);
+        st.setMessage(msg);
+        st.setObject(obj);
+        return st;
+    }
 }

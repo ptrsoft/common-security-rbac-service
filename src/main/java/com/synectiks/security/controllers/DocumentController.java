@@ -41,10 +41,8 @@ public class DocumentController {
 		}
 	}
 
-
-
 	@GetMapping("/document")
-	public ResponseEntity<List<Document>> searchdocument(@RequestParam Map<String, String> requestObj) {
+	public ResponseEntity<List<Document>> searchDocument(@RequestParam Map<String, String> requestObj) {
 		logger.info("Request to get document on given filter criteria");
 		try {
 			List<Document> list = documentService.searchDocument(requestObj);
@@ -56,42 +54,8 @@ public class DocumentController {
 		}
 	}
 
-	
-	
-
-	
-	
-	
-	
-	
-//	@DeleteMapping("/document/{id}")
-//	public ResponseEntity<Boolean> deleteDocument(@PathVariable Long id) {
-//
-//		logger.info("Request to delete a document");
-//		try {
-//			boolean delDocument = documentService.deleteDocument(id);
-//			if (delDocument) {
-//				return ResponseEntity.status(HttpStatus.OK).body(Boolean.TRUE);
-//			} else {
-//				return ResponseEntity.status(BusinessValidationCodes.DELETION_FAILED.value()).body(Boolean.FALSE);
-//			}
-//		} catch (NegativeIdException e) {
-//			logger.error("Delete document failed. NegativeIdException: ", e.getMessage());
-//			return ResponseEntity.status(BusinessValidationCodes.NEGATIVE_ID_NOT_ALLOWED.value()).body(null);
-//		} catch (IdNotFoundException e) {
-//			logger.error("Delete document failed. IdNotFoundException: ", e.getMessage());
-//			return ResponseEntity.status(BusinessValidationCodes.ID_NOT_FOUND.value()).body(null);
-//		} catch (DataNotFoundException e) {
-//			logger.error("Delete document failed. DataNotFoundException: ", e.getMessage());
-//			return ResponseEntity.status(BusinessValidationCodes.DATA_NOT_FOUND.value()).body(null);
-//		} catch (Exception e) {
-//			logger.error("Delete document failed. Exception: ", e);
-//			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
-//		}
-//	}
-
 	@GetMapping("/document/{id}")
-	public ResponseEntity<Document> getDepartment(@PathVariable Long id) {
+	public ResponseEntity<Document> getDocumentById(@PathVariable Long id) {
 
 		Map<String, String> venObj = new HashMap<>();
 		try {
