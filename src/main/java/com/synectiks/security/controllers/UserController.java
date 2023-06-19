@@ -49,6 +49,7 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonObject;
 import com.synectiks.security.config.Constants;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
@@ -144,12 +145,18 @@ public class UserController implements IApiController {
 	}
 
 	@RequestMapping(IConsts.API_CREATE)
-	public ResponseEntity<Object> create(@RequestParam("obj") String obj,
+	public ResponseEntity<Object> create(@RequestParam("type") String type,@RequestParam("organization") String organization, @RequestParam("username") String username,@RequestParam("password") String password,@RequestParam("email") String email,
 			@RequestParam(name = "file", required = false) MultipartFile file, HttpServletRequest request)
 			throws JsonMappingException, JsonProcessingException {
-		ObjectMapper mapper = new ObjectMapper();
-		ObjectNode json = (ObjectNode) mapper.readTree(obj);
-		User user = this.userRepository.findByUsername(json.get("username").asText());
+//		ObjectMapper mapper = new ObjectMapper();
+//		ObjectNode json = (ObjectNode) mapper.readTree(obj);
+		JsonObject obj=new JsonObject();
+		obj.addProperty("username", username);
+		obj.addProperty("type", type);
+		obj.addProperty("password", password);
+		obj.addProperty("email", email);
+		obj.addProperty("organization",organization);
+		User user = this.userRepository.findByUsername(obj.get("username").toString());
 		if (user != null) {
 			Status st = new Status();
 			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
@@ -159,7 +166,7 @@ public class UserController implements IApiController {
 		}
 		// check for duplicate email
 		user = new User();
-		user.setEmail(json.get("email").asText());
+		user.setEmail(obj.get("email").toString());
 		Optional<User> oUser = this.userRepository.findOne(Example.of(user));
 		if (oUser.isPresent()) {
 			Status st = new Status();
@@ -172,21 +179,21 @@ public class UserController implements IApiController {
 		try {
 			String signedInUser = IUtils.getUserFromRequest(request);
 //			user = IUtils.createEntity(service, signedInUser, User.class);
-			createUserFromJson(user, json);
+			createUserFromJson(user, obj);
 			// Encrypt the password
 			if (!IUtils.isNullOrEmpty(user.getPassword()) && !user.getPassword().startsWith("$shiro1$")) {
 				user.setPassword(pswdService.encryptPassword(user.getPassword()));
 			}
 			Date currentDate = new Date();
 
-			saveOrUpdateOrganization(json, user, currentDate);
+			saveOrUpdateOrganization(obj, user, currentDate);
 
 			user.setCreatedAt(currentDate);
 			user.setUpdatedAt(currentDate);
 
-			if (json.get("username") != null) {
-				user.setCreatedBy(json.get("username").asText());
-				user.setUpdatedBy(json.get("username").asText());
+			if (obj.get("username") != null) {
+				user.setCreatedBy(obj.get("username").toString());
+				user.setUpdatedBy(obj.get("username").toString());
 			} else {
 				user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
 				user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
@@ -194,7 +201,7 @@ public class UserController implements IApiController {
 
 			logger.info("Saving user: " + user);
 			user = userRepository.save(user);
-			addProfileImage(file, user, json, currentDate);
+			addProfileImage(file, user, obj, currentDate);
 			getDocumentList(user);
 		} catch (Throwable th) {
 			th.printStackTrace();
@@ -207,6 +214,8 @@ public class UserController implements IApiController {
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(user);
 	}
+
+
 
 	private void getDocumentList(User user) {
 		Map<String, String> requestObj = new HashMap<>();
@@ -222,7 +231,7 @@ public class UserController implements IApiController {
 
 	}
 
-	private void addProfileImage(MultipartFile file, User user, ObjectNode json, Date currentDate) throws IOException {
+	private void addProfileImage(MultipartFile file, User user, JsonObject json, Date currentDate) throws IOException {
 		if (file != null) {
 			byte[] bytes = file.getBytes();
 			String orgFileName = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename());
@@ -232,7 +241,7 @@ public class UserController implements IApiController {
 			}
 			String filename = "";
 			if (json.get("name") != null) {
-				filename = json.get("name").asText();
+				filename = json.get("name").toString();
 			}
 			filename = filename.toLowerCase().replaceAll(" ", "-") + "_" + System.currentTimeMillis() + "." + ext;
 			File localStorage = new File(Constants.LOCAL_PROFILE_IMAGE_STORAGE_DIRECTORY);
@@ -333,9 +342,9 @@ public class UserController implements IApiController {
 				// Encrypt the password
 				user.setPassword(pswdService.encryptPassword(reqObje.get("password").asText()));
 			}
-
+			
 			Date currentDate = new Date();
-			saveOrUpdateOrganization(reqObje, user, currentDate);
+			saveUpdateOrganization(reqObje, user, currentDate);
 			user.setUpdatedAt(currentDate);
 
 			if (reqObje.get("username") != null) {
@@ -353,10 +362,10 @@ public class UserController implements IApiController {
 		return ResponseEntity.status(HttpStatus.OK).body(user);
 	}
 
-	private void saveOrUpdateOrganization(ObjectNode reqObje, User user, Date currentDate) throws URISyntaxException {
-		if (!StringUtils.isBlank(reqObje.get("organization").asText())) {
+	private void saveOrUpdateOrganization(JsonObject  reqObje, User user, Date currentDate) throws URISyntaxException {
+		if (!StringUtils.isBlank(reqObje.get("organization").toString())) {
 			Organization organization = new Organization();
-			organization.setName(reqObje.get("organization").asText().toUpperCase());
+			organization.setName(reqObje.get("organization").toString().toUpperCase());
 			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
 			if (oOrg.isPresent()) {
 				user.setOrganization(oOrg.get());
@@ -365,8 +374,38 @@ public class UserController implements IApiController {
 				organization.setCreatedAt(currentDate);
 				organization.setUpdatedAt(currentDate);
 				if (reqObje.get("username") != null) {
-					organization.setCreatedBy(reqObje.get("username").asText());
-					organization.setUpdatedBy(reqObje.get("username").asText());
+					organization.setCreatedBy(reqObje.get("username").toString());
+					organization.setUpdatedBy(reqObje.get("username").toString());
+				} else {
+					organization.setCreatedBy(Constants.SYSTEM_ACCOUNT);
+					organization.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
+				}
+				organization = this.organizationRepository.save(organization);
+				user.setOrganization(organization);
+
+				URI uri = new URI(cmdbOrgUrl);
+				Organization org = new Organization();
+				org.setName(organization.getName());
+				org.setSecurityServiceOrgId(organization.getId());
+				ResponseEntity<Organization> result = restTemplate.postForEntity(uri, org, Organization.class);
+			}
+		}
+	}
+	
+	private void saveUpdateOrganization(ObjectNode  reqObje, User user, Date currentDate) throws URISyntaxException {
+		if (!StringUtils.isBlank(reqObje.get("organization").toString())) {
+			Organization organization = new Organization();
+			organization.setName(reqObje.get("organization").toString().toUpperCase());
+			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
+			if (oOrg.isPresent()) {
+				user.setOrganization(oOrg.get());
+			} else {
+				logger.info("Saving new organization: " + organization);
+				organization.setCreatedAt(currentDate);
+				organization.setUpdatedAt(currentDate);
+				if (reqObje.get("username") != null) {
+					organization.setCreatedBy(reqObje.get("username").toString());
+					organization.setUpdatedBy(reqObje.get("username").toString());
 				} else {
 					organization.setCreatedBy(Constants.SYSTEM_ACCOUNT);
 					organization.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
@@ -456,27 +495,27 @@ public class UserController implements IApiController {
 		return ResponseEntity.status(HttpStatus.OK).body(list);
 	}
 
-	private void createUserFromJson(User user, ObjectNode reqObj) {
+	private void createUserFromJson(User user, JsonObject reqObj) {
 		if (reqObj.get("type") != null) {
-			user.setType(reqObj.get("type").asText());
+			user.setType(reqObj.get("type").toString());
 		}
 		if (reqObj.get("username") != null) {
-			user.setUsername(reqObj.get("username").asText());
+			user.setUsername(reqObj.get("username").toString());
 		}
 		if (reqObj.get("password") != null) {
-			user.setPassword(reqObj.get("password").asText());
+			user.setPassword(reqObj.get("password").toString());
 		}
 		if (reqObj.get("active") != null) {
-			user.setActive(reqObj.get("active").asBoolean());
+			user.setActive(reqObj.get("active").getAsBoolean());
 		}
 		if (reqObj.get("email") != null) {
-			user.setEmail(reqObj.get("email").asText());
+			user.setEmail(reqObj.get("email").toString());
 		}
 
 //		user.setOwnerId(reqObj.get("ownerId") != null ? reqObj.get("ownerId").asLong() : null);
 		if (reqObj.get("organization") != null) {
 			Organization organization = new Organization();
-			organization.setName(reqObj.get("organization").asText().toUpperCase());
+			organization.setName(reqObj.get("organization").toString().toUpperCase());
 			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
 			if (oOrg.isPresent()) {
 				user.setOrganization(oOrg.get());
