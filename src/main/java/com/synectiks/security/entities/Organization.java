@@ -47,6 +47,18 @@ public class Organization extends PSqlEntity implements Serializable {
     @Column(nullable = true)
     private String status;
 
+
+    @Column(name = "cmdb_org_id", nullable = true)
+    private Long cmdbOrgId;
+
+    public Long getCmdbOrgId() {
+        return cmdbOrgId;
+    }
+
+    public void setCmdbOrgId(Long cmdbOrgId) {
+        this.cmdbOrgId = cmdbOrgId;
+    }
+
     @Transient
     @JsonProperty
     private List<OrganizationalUnit> organizationalUnitList;

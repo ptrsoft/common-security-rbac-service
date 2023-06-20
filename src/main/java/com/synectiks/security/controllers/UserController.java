@@ -3,24 +3,24 @@
  */
 package com.synectiks.security.controllers;
 
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.StringTokenizer;
-
-import javax.mail.internet.MimeMessage;
-import javax.servlet.http.HttpServletRequest;
-
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonObject;
+import com.synectiks.security.config.Constants;
+import com.synectiks.security.config.IConsts;
+import com.synectiks.security.config.IDBConsts;
+import com.synectiks.security.email.MailService;
+import com.synectiks.security.entities.*;
+import com.synectiks.security.interfaces.IApiController;
+import com.synectiks.security.mfa.GoogleMultiFactorAuthenticationService;
+import com.synectiks.security.repositories.OrganizationRepository;
+import com.synectiks.security.repositories.RoleRepository;
+import com.synectiks.security.repositories.UserRepository;
+import com.synectiks.security.service.DocumentService;
+import com.synectiks.security.util.IUtils;
+import com.synectiks.security.util.RandomGenerator;
+import com.synectiks.security.util.TemplateReader;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.slf4j.Logger;
@@ -35,39 +35,20 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.mail.javamail.MimeMessageHelper;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.JsonObject;
-import com.synectiks.security.config.Constants;
-import com.synectiks.security.config.IConsts;
-import com.synectiks.security.config.IDBConsts;
-import com.synectiks.security.email.MailService;
-import com.synectiks.security.entities.Document;
-import com.synectiks.security.entities.Organization;
-import com.synectiks.security.entities.Role;
-import com.synectiks.security.entities.Status;
-import com.synectiks.security.entities.User;
-import com.synectiks.security.interfaces.IApiController;
-import com.synectiks.security.mfa.GoogleMultiFactorAuthenticationService;
-import com.synectiks.security.repositories.OrganizationRepository;
-import com.synectiks.security.repositories.RoleRepository;
-import com.synectiks.security.repositories.UserRepository;
-import com.synectiks.security.service.DocumentService;
-import com.synectiks.security.util.IUtils;
-import com.synectiks.security.util.RandomGenerator;
-import com.synectiks.security.util.TemplateReader;
+import javax.mail.internet.MimeMessage;
+import javax.servlet.http.HttpServletRequest;
+import java.io.File;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * @author Rajesh
@@ -145,77 +126,70 @@ public class UserController implements IApiController {
 	}
 
 	@RequestMapping(IConsts.API_CREATE)
-	public ResponseEntity<Object> create(@RequestParam("type") String type,@RequestParam("organization") String organization, @RequestParam("username") String username,@RequestParam("password") String password,@RequestParam("email") String email,
+	public ResponseEntity<Object> create(@RequestParam(name = "type", required = false) String type,
+                                         @RequestParam("organization") String organization,
+                                         @RequestParam("username") String username,
+                                         @RequestParam("password") String password,
+                                         @RequestParam("email") String email,
 			@RequestParam(name = "file", required = false) MultipartFile file, HttpServletRequest request)
 			throws JsonMappingException, JsonProcessingException {
 //		ObjectMapper mapper = new ObjectMapper();
 //		ObjectNode json = (ObjectNode) mapper.readTree(obj);
-		JsonObject obj=new JsonObject();
-		obj.addProperty("username", username);
-		obj.addProperty("type", type);
-		obj.addProperty("password", password);
-		obj.addProperty("email", email);
-		obj.addProperty("organization",organization);
-		User user = this.userRepository.findByUsername(obj.get("username").toString());
+//		JsonObject obj=new JsonObject();
+//		obj.addProperty("username", username);
+//		obj.addProperty("type", type);
+//		obj.addProperty("password", password);
+//		obj.addProperty("email", email);
+//		obj.addProperty("organization",organization);
+		User user = this.userRepository.findByUsername(username);
 		if (user != null) {
-			Status st = new Status();
-			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-			st.setType("ERROR");
-			st.setMessage("Login id already exists");
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Login id already exists", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 		// check for duplicate email
 		user = new User();
-		user.setEmail(obj.get("email").toString());
+		user.setEmail(email);
 		Optional<User> oUser = this.userRepository.findOne(Example.of(user));
 		if (oUser.isPresent()) {
-			Status st = new Status();
-			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-			st.setType("ERROR");
-			st.setMessage("Email already exists");
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 		user = new User();
 		try {
-			String signedInUser = IUtils.getUserFromRequest(request);
+//			String signedInUser = IUtils.getUserFromRequest(request);
 //			user = IUtils.createEntity(service, signedInUser, User.class);
-			createUserFromJson(user, obj);
+			createUserFromJson(user, type, organization, username, password, email);
 			// Encrypt the password
 			if (!IUtils.isNullOrEmpty(user.getPassword()) && !user.getPassword().startsWith("$shiro1$")) {
 				user.setPassword(pswdService.encryptPassword(user.getPassword()));
 			}
 			Date currentDate = new Date();
+            user.setCreatedAt(currentDate);
+            user.setUpdatedAt(currentDate);
 
-			saveOrUpdateOrganization(obj, user, currentDate);
+			saveOrUpdateOrganization(organization, user, currentDate);
 
-			user.setCreatedAt(currentDate);
-			user.setUpdatedAt(currentDate);
 
-			if (obj.get("username") != null) {
-				user.setCreatedBy(obj.get("username").toString());
-				user.setUpdatedBy(obj.get("username").toString());
-			} else {
+//			if (obj.get("username") != null) {
+//				user.setCreatedBy(obj.get("username").toString());
+//				user.setUpdatedBy(obj.get("username").toString());
+//			} else {
 				user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
 				user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-			}
+//			}
 
 			logger.info("Saving user: " + user);
 			user = userRepository.save(user);
-			addProfileImage(file, user, obj, currentDate);
+			addProfileImage(file, user, currentDate);
 			getDocumentList(user);
 		} catch (Throwable th) {
 			th.printStackTrace();
-			logger.error(th.getMessage(), th);
-			Status st = new Status();
-			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-			st.setType("ERROR");
-			st.setMessage("Service issues. User data cannot be saved.");
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+			logger.error("Exception: ",th);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Service issues. User data cannot be saved", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(user);
 	}
-
-
 
 	private void getDocumentList(User user) {
 		Map<String, String> requestObj = new HashMap<>();
@@ -231,7 +205,7 @@ public class UserController implements IApiController {
 
 	}
 
-	private void addProfileImage(MultipartFile file, User user, JsonObject json, Date currentDate) throws IOException {
+	private void addProfileImage(MultipartFile file, User user, Date currentDate) throws IOException {
 		if (file != null) {
 			byte[] bytes = file.getBytes();
 			String orgFileName = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename());
@@ -239,10 +213,10 @@ public class UserController implements IApiController {
 			if (orgFileName.lastIndexOf(".") != -1) {
 				ext = orgFileName.substring(orgFileName.lastIndexOf(".") + 1);
 			}
-			String filename = "";
-			if (json.get("name") != null) {
-				filename = json.get("name").toString();
-			}
+			String filename = orgFileName;
+//			if (json.get("name") != null) {
+//				filename = json.get("name").toString();
+//			}
 			filename = filename.toLowerCase().replaceAll(" ", "-") + "_" + System.currentTimeMillis() + "." + ext;
 			File localStorage = new File(Constants.LOCAL_PROFILE_IMAGE_STORAGE_DIRECTORY);
 			if (!localStorage.exists()) {
@@ -309,18 +283,12 @@ public class UserController implements IApiController {
 				oUser = this.userRepository.findOne(Example.of(user));
 				if (oUser.isPresent()) {
 					if (!oUser.get().getUsername().equals(reqObje.get("username").asText())) {
-						Status st = new Status();
-						st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-						st.setType("ERROR");
-						st.setMessage("Email id already exists");
-						return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+                        Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email id already exists", null);
+                        return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 					}
 				}
 			} catch (IncorrectResultSizeDataAccessException e) {
-				Status st = new Status();
-				st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-				st.setType("ERROR");
-				st.setMessage("Email id already exists");
+                Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email id already exists", null);
 				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 			}
 		}
@@ -342,7 +310,7 @@ public class UserController implements IApiController {
 				// Encrypt the password
 				user.setPassword(pswdService.encryptPassword(reqObje.get("password").asText()));
 			}
-			
+
 			Date currentDate = new Date();
 			saveUpdateOrganization(reqObje, user, currentDate);
 			user.setUpdatedAt(currentDate);
@@ -357,15 +325,16 @@ public class UserController implements IApiController {
 
 		} catch (Throwable th) {
 			logger.error(th.getMessage(), th);
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR",th.getMessage(), null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 		return ResponseEntity.status(HttpStatus.OK).body(user);
 	}
 
-	private void saveOrUpdateOrganization(JsonObject  reqObje, User user, Date currentDate) throws URISyntaxException {
-		if (!StringUtils.isBlank(reqObje.get("organization").toString())) {
+	private void saveOrUpdateOrganization(String orgName, User user, Date currentDate) throws URISyntaxException {
+		if (!StringUtils.isBlank(orgName)) {
 			Organization organization = new Organization();
-			organization.setName(reqObje.get("organization").toString().toUpperCase());
+			organization.setName(orgName.toUpperCase());
 			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
 			if (oOrg.isPresent()) {
 				user.setOrganization(oOrg.get());
@@ -373,25 +342,33 @@ public class UserController implements IApiController {
 				logger.info("Saving new organization: " + organization);
 				organization.setCreatedAt(currentDate);
 				organization.setUpdatedAt(currentDate);
-				if (reqObje.get("username") != null) {
-					organization.setCreatedBy(reqObje.get("username").toString());
-					organization.setUpdatedBy(reqObje.get("username").toString());
-				} else {
-					organization.setCreatedBy(Constants.SYSTEM_ACCOUNT);
-					organization.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-				}
+                organization.setCreatedBy(user.getCreatedBy());
+                organization.setUpdatedBy(user.getUpdatedBy());
+
 				organization = this.organizationRepository.save(organization);
-				user.setOrganization(organization);
 
 				URI uri = new URI(cmdbOrgUrl);
 				Organization org = new Organization();
 				org.setName(organization.getName());
 				org.setSecurityServiceOrgId(organization.getId());
 				ResponseEntity<Organization> result = restTemplate.postForEntity(uri, org, Organization.class);
-			}
+                if(result != null && result.getBody() != null){
+                    try{
+                        Organization cmdbOrg = result.getBody();
+                        organization.setCmdbOrgId(cmdbOrg.getId());
+                        organization = this.organizationRepository.save(organization);
+                        user.setOrganization(organization);
+                    }catch (Exception e){
+                        logger.error("Organization could not be retrieved from dmdb: ",e);
+                        user.setOrganization(organization);
+                    }
+
+                }
+
+            }
 		}
 	}
-	
+
 	private void saveUpdateOrganization(ObjectNode  reqObje, User user, Date currentDate) throws URISyntaxException {
 		if (!StringUtils.isBlank(reqObje.get("organization").toString())) {
 			Organization organization = new Organization();
@@ -495,28 +472,28 @@ public class UserController implements IApiController {
 		return ResponseEntity.status(HttpStatus.OK).body(list);
 	}
 
-	private void createUserFromJson(User user, JsonObject reqObj) {
-		if (reqObj.get("type") != null) {
-			user.setType(reqObj.get("type").toString());
+	private void createUserFromJson(User user, String type, String organization, String username, String password, String email) {
+		if (!StringUtils.isBlank(type)) {
+			user.setType(type);
 		}
-		if (reqObj.get("username") != null) {
-			user.setUsername(reqObj.get("username").toString());
+		if (!StringUtils.isBlank(username)) {
+			user.setUsername(username);
 		}
-		if (reqObj.get("password") != null) {
-			user.setPassword(reqObj.get("password").toString());
+		if (!StringUtils.isBlank(password)) {
+			user.setPassword(password);
 		}
-		if (reqObj.get("active") != null) {
-			user.setActive(reqObj.get("active").getAsBoolean());
-		}
-		if (reqObj.get("email") != null) {
-			user.setEmail(reqObj.get("email").toString());
+//		if (reqObj.get("active") != null) {
+			user.setActive(true);
+//		}
+		if (!StringUtils.isBlank(email)) {
+			user.setEmail(email);
 		}
 
 //		user.setOwnerId(reqObj.get("ownerId") != null ? reqObj.get("ownerId").asLong() : null);
-		if (reqObj.get("organization") != null) {
-			Organization organization = new Organization();
-			organization.setName(reqObj.get("organization").toString().toUpperCase());
-			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
+		if (!StringUtils.isBlank(organization)) {
+			Organization org = new Organization();
+            org.setName(organization.toUpperCase());
+			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(org));
 			if (oOrg.isPresent()) {
 				user.setOrganization(oOrg.get());
 			}
@@ -618,11 +595,8 @@ public class UserController implements IApiController {
 		logger.info("Request to create a new user invite");
 		User user = this.userRepository.findByUsername(inviteeEmail);
 		if (user != null) {
-			Status st = new Status();
-			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-			st.setType("ERROR");
-			st.setMessage(inviteeEmail + " already exists. Please choose a different user id");
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR",inviteeEmail + " already exists. Please choose a different user id", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 
 		try {
@@ -632,29 +606,20 @@ public class UserController implements IApiController {
 			Optional<User> oUser = this.userRepository.findOne(Example.of(user));
 			if (oUser.isPresent()) {
 				logger.warn("Another user with email id: " + inviteeEmail + " already exists");
-				Status st = new Status();
-				st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-				st.setType("ERROR");
-				st.setMessage("Email id: " + inviteeEmail + " already exists");
-				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+				Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email id: " + inviteeEmail + " already exists", null);
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 			}
 			user.setActive(false);
 			oUser = this.userRepository.findOne(Example.of(user));
 			if (oUser.isPresent()) {
 				logger.warn("Another user with email id: " + inviteeEmail + " already exists");
-				Status st = new Status();
-				st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-				st.setType("ERROR");
-				st.setMessage("Email id: " + inviteeEmail + " already exists");
-				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+				Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email id: " + inviteeEmail + " already exists", null);
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 			}
 		} catch (Exception e) {
 			logger.warn("Email id: " + inviteeEmail + " already exists", e.getMessage());
-			Status st = new Status();
-			st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-			st.setType("ERROR");
-			st.setMessage("Email already exists");
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 
 		String invitationCode = RandomGenerator.getRandomValue();
@@ -667,10 +632,7 @@ public class UserController implements IApiController {
 			owner.setActive(true);
 			Optional<User> oOwner = userRepository.findOne(Example.of(owner));
 			if (!oOwner.isPresent()) {
-				Status st = new Status();
-				st.setCode(HttpStatus.EXPECTATION_FAILED.value());
-				st.setType("ERROR");
-				st.setMessage("Owner not found. Please check owner's email id");
+                Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Owner not found. Please check owner's email id", null);
 				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 			}
 //
@@ -702,13 +664,8 @@ public class UserController implements IApiController {
 			MimeMessage mimeMessage = this.mailService.createHtmlMailMessage(templateData, inviteeEmail, subject);
 			this.mailService.sendEmail(mimeMessage);
 			logger.info("User invitation mail send");
-
-			Status st = new Status();
-			st.setCode(HttpStatus.OK.value());
-			st.setType("SUCCESS");
-			st.setMessage("Invitation link sent to user's email: " + inviteeEmail);
-			st.setObject(invitee);
-			return ResponseEntity.status(HttpStatus.OK).body(st);
+            Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Invitation link sent to user's email: " + inviteeEmail, invitee);
+            return ResponseEntity.status(HttpStatus.OK).body(st);
 
 		} catch (Exception e) {
 			logger.error("User invite failed. Exception: ", e);
