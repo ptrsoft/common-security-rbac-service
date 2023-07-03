@@ -38,7 +38,7 @@ SERVICE_JAR=${SERVICE_JAR:=target/common-security-rbac-service-3.0.0-SNAPSHOT.ja
 SECURITY_PID=${SECURITY_PID:=security_service.pid}
 LOG_FILE=${LOG_FILE:=console.log}
 #LOG4J=${LOG4J:=}
-DEFAULT_JAVA_OPTS="--SERVER=100.64.108.25 --SERVER_PORT=8094 --PSQL_HOST=postgresql.ch8wfucynpvq.us-east-1.rds.amazonaws.com --PSQL_PORT=5431 --PSQL_DB=security --PSQL_USER=postgres --PSQL_PSWD=postgres -Djdk.tls.acknowledgeCloseNotify=true -Xms1g -Xmx1g -XX:NewRatio=1 -XX:+ResizeTLAB -XX:+UseConcMarkSweepGC -XX:+CMSConcurrentMTEnabled -XX:+CMSClassUnloadingEnabled -XX:-OmitStackTraceInFastThrow"
+DEFAULT_JAVA_OPTS="--SERVER=100.64.108.25 --SERVER_PORT=8094 --PSQL_HOST=postgresql.ch8wfucynpvq.us-east-1.rds.amazonaws.com --PSQL_PORT=5431 --PSQL_DB=security --PSQL_USER=postgres --PSQL_PSWD=postgres -Djdk.io.File.enableADS=true -Djdk.tls.acknowledgeCloseNotify=true -Xms1g -Xmx1g -XX:NewRatio=1 -XX:+ResizeTLAB -XX:+UseConcMarkSweepGC -XX:+CMSConcurrentMTEnabled -XX:+CMSClassUnloadingEnabled -XX:-OmitStackTraceInFastThrow"
 
 if $JAVA_CMD -XX:+PrintFlagsFinal 2>&1 |grep -q UseParNewGC; then
 	DEFAULT_JAVA_OPTS="${DEFAULT_JAVA_OPTS} -XX:+UseParNewGC"

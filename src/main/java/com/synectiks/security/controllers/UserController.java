@@ -3,10 +3,7 @@
  */
 package com.synectiks.security.controllers;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonMappingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.gson.JsonObject;
 import com.synectiks.security.config.Constants;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
@@ -115,32 +112,23 @@ public class UserController implements IApiController {
 		for (Document doc : docList) {
 			if (doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
 				if (doc.getLocalFilePath() != null) {
-					byte[] bytes = Files.readAllBytes(Paths.get(doc.getLocalFilePath()));
-					by.setProfileImage(bytes);
+                    if(Files.exists(Paths.get(doc.getLocalFilePath()))){
+                        byte[] bytes = Files.readAllBytes(Paths.get(doc.getLocalFilePath()));
+                        by.setProfileImage(bytes);
+                    }
 				}
 				break;
 			}
 		}
-
-
 	}
 
 	@RequestMapping(IConsts.API_CREATE)
 	public ResponseEntity<Object> create(@RequestParam(name = "type", required = false) String type,
-                                         @RequestParam("organization") String organization,
+                                         @RequestParam(name = "organization", required = false) String organization,
                                          @RequestParam("username") String username,
                                          @RequestParam("password") String password,
-                                         @RequestParam("email") String email,
-			@RequestParam(name = "file", required = false) MultipartFile file, HttpServletRequest request)
-			throws JsonMappingException, JsonProcessingException {
-//		ObjectMapper mapper = new ObjectMapper();
-//		ObjectNode json = (ObjectNode) mapper.readTree(obj);
-//		JsonObject obj=new JsonObject();
-//		obj.addProperty("username", username);
-//		obj.addProperty("type", type);
-//		obj.addProperty("password", password);
-//		obj.addProperty("email", email);
-//		obj.addProperty("organization",organization);
+                                         @RequestParam(name = "email", required = false) String email,
+			@RequestParam(name = "file", required = false) MultipartFile file, HttpServletRequest request) {
 		User user = this.userRepository.findByUsername(username);
 		if (user != null) {
             Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Login id already exists", null);
@@ -168,15 +156,8 @@ public class UserController implements IApiController {
             user.setUpdatedAt(currentDate);
 
 			saveOrUpdateOrganization(organization, user, currentDate);
-
-
-//			if (obj.get("username") != null) {
-//				user.setCreatedBy(obj.get("username").toString());
-//				user.setUpdatedBy(obj.get("username").toString());
-//			} else {
-				user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
-				user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-//			}
+            user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
+            user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
 
 			logger.info("Saving user: " + user);
 			user = userRepository.save(user);
@@ -202,7 +183,6 @@ public class UserController implements IApiController {
 			}
 		}
 		user.setDocumentList(finalDocList);
-
 	}
 
 	private void addProfileImage(MultipartFile file, User user, Date currentDate) throws IOException {
