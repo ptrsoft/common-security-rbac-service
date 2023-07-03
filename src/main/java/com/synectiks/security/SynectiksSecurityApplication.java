@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.synectiks.security;
 
@@ -46,9 +46,9 @@ public class SynectiksSecurityApplication implements InitializingBean {
 	public static void main(String[] args) {
 		ctx = SpringApplication.run(SynectiksSecurityApplication.class, args);
 		logApplicationStartup(ctx.getEnvironment());
-		for (String bean : ctx.getBeanDefinitionNames()) {
-			logger.info("Bean: " + bean);
-		}
+//		for (String bean : ctx.getBeanDefinitionNames()) {
+//			logger.info("Bean: " + bean);
+//		}
 	}
 
 	/**
@@ -83,7 +83,7 @@ public class SynectiksSecurityApplication implements InitializingBean {
 			protocol = "https";
 		}
 		String serverPort = env.getProperty("server.port");
-		Constants.PORT = serverPort; 
+		Constants.PORT = serverPort;
 		String contextPath = env.getProperty("server.servlet.context-path");
 		if (StringUtils.isBlank(contextPath)) {
 			contextPath = "/";
@@ -117,5 +117,5 @@ public class SynectiksSecurityApplication implements InitializingBean {
 		return null;
 	}
 
-	
+
 }
