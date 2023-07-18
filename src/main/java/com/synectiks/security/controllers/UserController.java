@@ -801,99 +801,99 @@ public class UserController implements IApiController {
         return ResponseEntity.status(HttpStatus.OK).body(st);
 	}
 
-	@RequestMapping(path = "/enableGoogleMfa")
-	public ResponseEntity<Object> enableGoogleMfa(@RequestParam final String userName,
-			@RequestParam final String organizationName) {
-		logger.info("Request to enable google mfa for user: {}", userName);
-		try {
-			User user = userRepository.findByUsername(userName);
-			if (user == null) {
-				logger.error("User not found. User: {}, Organization: {}", userName, organizationName);
-				Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found", null);
-                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-			}
+//	@RequestMapping(path = "/enableGoogleMfa")
+//	public ResponseEntity<Object> enableGoogleMfa(@RequestParam final String userName,
+//			@RequestParam final String organizationName) {
+//		logger.info("Request to enable google mfa for user: {}", userName);
+//		try {
+//			User user = userRepository.findByUsername(userName);
+//			if (user == null) {
+//				logger.error("User not found. User: {}, Organization: {}", userName, organizationName);
+//				Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found", null);
+//                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//			}
+//
+//			user.setIsMfaEnable("YES");
+//			String mfaKey = googleMultiFactorAuthenticationService.getGoogleAuthenticationKey(userName);
+//			user.setGoogleMfaKey(mfaKey);
+//
+//			String directory = "qrimages/" + organizationName;
+//			File dir = new File(directory);
+//			if (!dir.exists()) {
+//				dir.mkdirs();
+//			}
+//			String fileName = userName + ".png";
+//			String filePath = directory + "/" + fileName;
+//			int size = 125;
+//			String fileType = "png";
+//			File qrFile = new File(filePath);
+//			String keyUri = googleMultiFactorAuthenticationService.generateGoogleAuthenticationUri(userName,
+//					"Synectiks ", mfaKey);
+//			googleMultiFactorAuthenticationService.createQRImage(qrFile, keyUri, size, fileType);
+//
+//			user.setMfaQrCode(Files.readAllBytes(qrFile.toPath()));
+//			user.setMfaQrImageFilePath(qrFile.getAbsolutePath());
+//			user = userRepository.save(user);
+//
+//			logger.info("Google mfa is enabled for user: {}", userName);
+//
+//			String templateData = this.templateReader.readTemplate("/enablegooglemfa.ftl");
+//			logger.debug("Injecting dynamic data in enable google mfa template");
+//			templateData = templateData.replace("${userName}", userName);
+//			templateData = templateData.replace("${mfaKey}", mfaKey);
+//
+//			String subject = "Dear " + userName + ". Google multifactor authentication security enabled";
+//
+//			MimeMessage mimeMessage = this.mailService.getJavaMailSender().createMimeMessage();
+//			MimeMessageHelper helper = this.mailService.createHtmlMailMessageWithImage(mimeMessage, templateData,
+//					user.getEmail(), subject);
+//			helper.addInline("qrImage", qrFile);
+//			this.mailService.sendEmail(mimeMessage);
+//			logger.info("Google mfa enabled. Access key sent in mail.");
+//			Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google mfa is enabled for user: " + userName, user);
+//            return ResponseEntity.status(HttpStatus.OK).body(st);
+//		} catch (Exception e) {
+//			logger.error("Exception in enabling google mfa: ", e);
+//			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Exception in enabling google mfa", null);
+//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//		}
+//	}
 
-			user.setIsMfaEnable("YES");
-			String mfaKey = googleMultiFactorAuthenticationService.getGoogleAuthenticationKey(userName);
-			user.setGoogleMfaKey(mfaKey);
-
-			String directory = "qrimages/" + organizationName;
-			File dir = new File(directory);
-			if (!dir.exists()) {
-				dir.mkdirs();
-			}
-			String fileName = userName + ".png";
-			String filePath = directory + "/" + fileName;
-			int size = 125;
-			String fileType = "png";
-			File qrFile = new File(filePath);
-			String keyUri = googleMultiFactorAuthenticationService.generateGoogleAuthenticationUri(userName,
-					"Synectiks ", mfaKey);
-			googleMultiFactorAuthenticationService.createQRImage(qrFile, keyUri, size, fileType);
-
-			user.setMfaQrCode(Files.readAllBytes(qrFile.toPath()));
-			user.setMfaQrImageFilePath(qrFile.getAbsolutePath());
-			user = userRepository.save(user);
-
-			logger.info("Google mfa is enabled for user: {}", userName);
-
-			String templateData = this.templateReader.readTemplate("/enablegooglemfa.ftl");
-			logger.debug("Injecting dynamic data in enable google mfa template");
-			templateData = templateData.replace("${userName}", userName);
-			templateData = templateData.replace("${mfaKey}", mfaKey);
-
-			String subject = "Dear " + userName + ". Google multifactor authentication security enabled";
-
-			MimeMessage mimeMessage = this.mailService.getJavaMailSender().createMimeMessage();
-			MimeMessageHelper helper = this.mailService.createHtmlMailMessageWithImage(mimeMessage, templateData,
-					user.getEmail(), subject);
-			helper.addInline("qrImage", qrFile);
-			this.mailService.sendEmail(mimeMessage);
-			logger.info("Google mfa enabled. Access key sent in mail.");
-			Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google mfa is enabled for user: " + userName, user);
-            return ResponseEntity.status(HttpStatus.OK).body(st);
-		} catch (Exception e) {
-			logger.error("Exception in enabling google mfa: ", e);
-			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Exception in enabling google mfa", null);
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-		}
-	}
-
-	@RequestMapping(path = "/disableGoogleMfa")
-	public ResponseEntity<Object> disableGoogleMfa(@RequestParam final String userName,
-			@RequestParam final String organizationName) {
-		logger.info("Request to disable google mfa for user: {}", userName);
-		try {
-
-			User user = userRepository.findByUsername(userName);
-			if (user == null) {
-				logger.error("User not found. User: {}, Organization: {}", userName, organizationName);
-				Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found", null);
-                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-			}
-
-			user.setIsMfaEnable("NO");
-			user.setGoogleMfaKey(null);
-			user.setMfaQrImageFilePath(null);
-			user = userRepository.save(user);
-
-			String fileName = userName + ".png";
-			String filePath = "qrimages/" + organizationName + "/" + fileName;
-			File file = new File(filePath);
-
-			if (file.exists()) {
-				file.delete();
-			}
-
-			logger.info("Google mfa is disable for user: {}", userName);
-			Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google mfa is disabled for user: " + userName, user);
-			return ResponseEntity.status(HttpStatus.OK).body(st);
-		} catch (Exception e) {
-			logger.error("Exception in disabling google mfa: ", e);
-			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Exception in disabling google mfa", null);
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-		}
-	}
+//	@RequestMapping(path = "/disableGoogleMfa")
+//	public ResponseEntity<Object> disableGoogleMfa(@RequestParam final String userName,
+//			@RequestParam final String organizationName) {
+//		logger.info("Request to disable google mfa for user: {}", userName);
+//		try {
+//
+//			User user = userRepository.findByUsername(userName);
+//			if (user == null) {
+//				logger.error("User not found. User: {}, Organization: {}", userName, organizationName);
+//				Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found", null);
+//                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//			}
+//
+//			user.setIsMfaEnable("NO");
+//			user.setGoogleMfaKey(null);
+//			user.setMfaQrImageFilePath(null);
+//			user = userRepository.save(user);
+//
+//			String fileName = userName + ".png";
+//			String filePath = "qrimages/" + organizationName + "/" + fileName;
+//			File file = new File(filePath);
+//
+//			if (file.exists()) {
+//				file.delete();
+//			}
+//
+//			logger.info("Google mfa is disable for user: {}", userName);
+//			Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google mfa is disabled for user: " + userName, user);
+//			return ResponseEntity.status(HttpStatus.OK).body(st);
+//		} catch (Exception e) {
+//			logger.error("Exception in disabling google mfa: ", e);
+//			Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Exception in disabling google mfa", null);
+//			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//		}
+//	}
 
 	@Override
 	public ResponseEntity<Object> create(ObjectNode entity, HttpServletRequest request) {

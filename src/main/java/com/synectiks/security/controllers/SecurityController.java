@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.controllers;
 
@@ -62,13 +62,13 @@ public class SecurityController {
 	private static final String SUC_MSG = "{\"message\": \"SUCCESS\"}";
 
 	private DefaultPasswordService pswdService = new DefaultPasswordService();
-	
+
 	@Autowired
 	private UserRepository users;
-	
+
 	@Autowired
 	private OrganizationRepository organizationRepository;
-	
+
 	@Autowired
 	GoogleMultiFactorAuthenticationService googleMultiFactorAuthenticationService;
 	@Autowired
@@ -81,7 +81,7 @@ public class SecurityController {
 		token.setPassword(password.toCharArray());
 		token.setRememberMe(rememberMe);
 
-	
+
 		return authenticate(token);
 	}
 	private void getDocumentList(User usr) {
@@ -111,7 +111,7 @@ public class SecurityController {
 			}
 		}
 
-		
+
 	}
 
 
@@ -147,7 +147,7 @@ public class SecurityController {
             subject.login(token);
             AuthenticationInfo info = SecurityUtils.getSecurityManager().authenticate(token);
             User usr = users.findByUsername(token.getUsername());
-     
+
             if(StringUtils.isBlank(usr.getIsMfaEnable())) {
             	usr.setIsMfaEnable(Constants.NO);
             }
@@ -208,17 +208,17 @@ public class SecurityController {
         }
         return ResponseEntity.status(HttpStatus.OK).body(usr);
     }
-	
+
 	@RequestMapping(value = "/logout", method = RequestMethod.GET)
 	public String logout() {
 		SecurityUtils.getSubject().logout();
 		return SUC_MSG;
 	}
 
-	
+
 	@RequestMapping(value = "/importUser")
 	public ResponseEntity<Object> importUser(@RequestBody List<String> list) {
-		
+
 		try {
 			List<User> existingUsers = (List<User>) users.findAll();
 			for(User user: existingUsers) {
@@ -227,7 +227,7 @@ public class SecurityController {
 				}
 			}
 			List<User> newUsers = new ArrayList<User>();
-			
+
 			for(String userId: list) {
 				User entity = new User();
 				entity.setEmail(userId);
@@ -237,11 +237,11 @@ public class SecurityController {
 //				entity.setCreatedAt(new Date(System.currentTimeMillis()));
 				entity.setCreatedBy("APPLICATION");
 				newUsers.add(entity);
-				
+
 			}
 			users.saveAll(newUsers);
 			logger.info("All users successfully saved in security db" );
-			
+
 		} catch (Throwable th) {
 //			th.printStackTrace();
 			logger.error("Exception in importUser: ", th);
@@ -249,50 +249,50 @@ public class SecurityController {
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body("SUCCESS");
 	}
-	
-	
-	@RequestMapping(value = "/authenticateGoogleMfa")
-	@ResponseBody
-    public ResponseEntity<Object> authenticateGoogleMfa(@RequestParam final String userName,
-    		@RequestParam final String organizationName, @RequestParam final String mfaCode) {
-		logger.error("Request to authenticate google mfa token");
-		try {
-			User user = new User();
-			user.setUsername(userName);
-			user.setActive(true);
-			
-			Organization organization = new Organization();
-			organization.setName(organizationName);
-			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
-			if(!oOrg.isPresent()) {
-				logger.error("Organization not found. Organization: {}", organizationName);
-				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
-			}
-			user.setOrganization(oOrg.get());
-			
-			Optional<User> oUser = users.findOne(Example.of(user));
-			if(!oUser.isPresent()) {
-				logger.error("User not found. User: {}, Organization: {}", userName, organizationName);
-				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
-			}
-			user = oUser.get();
-			
-			
-			GoogleAuthenticator gAuth = new GoogleAuthenticator(); 
-			boolean matches = gAuth.authorize(user.getGoogleMfaKey(), Integer.parseInt(mfaCode));
-			if(matches) {
-				logger.info("Google mfa token authentication success");
-			}else {
-				logger.info("Google mfa token authentication failed");
-			}
-				
-			return ResponseEntity.status(HttpStatus.OK).body(matches);
-		}catch(Exception e) {
-			logger.error("Exception in authenticateGoogleMfa: ",e);
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
-		}
-		
-		
-    }
-	
+
+
+//	@RequestMapping(value = "/authenticateGoogleMfa")
+//	@ResponseBody
+//    public ResponseEntity<Object> authenticateGoogleMfa(@RequestParam final String userName,
+//    		@RequestParam final String organizationName, @RequestParam final String mfaCode) {
+//		logger.error("Request to authenticate google mfa token");
+//		try {
+//			User user = new User();
+//			user.setUsername(userName);
+//			user.setActive(true);
+//
+//			Organization organization = new Organization();
+//			organization.setName(organizationName);
+//			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
+//			if(!oOrg.isPresent()) {
+//				logger.error("Organization not found. Organization: {}", organizationName);
+//				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
+//			}
+//			user.setOrganization(oOrg.get());
+//
+//			Optional<User> oUser = users.findOne(Example.of(user));
+//			if(!oUser.isPresent()) {
+//				logger.error("User not found. User: {}, Organization: {}", userName, organizationName);
+//				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
+//			}
+//			user = oUser.get();
+//
+//
+//			GoogleAuthenticator gAuth = new GoogleAuthenticator();
+//			boolean matches = gAuth.authorize(user.getGoogleMfaKey(), Integer.parseInt(mfaCode));
+//			if(matches) {
+//				logger.info("Google mfa token authentication success");
+//			}else {
+//				logger.info("Google mfa token authentication failed");
+//			}
+//
+//			return ResponseEntity.status(HttpStatus.OK).body(matches);
+//		}catch(Exception e) {
+//			logger.error("Exception in authenticateGoogleMfa: ",e);
+//			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
+//		}
+//
+//
+//    }
+
 }
