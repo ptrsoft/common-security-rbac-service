@@ -804,7 +804,7 @@ public class UserController implements IApiController {
         return ResponseEntity.status(HttpStatus.OK).body(st);
 	}
 
-    @RequestMapping(path = "/mfa-code", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(path = "/mfaCode", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> getMfaCode(@RequestBody ObjectNode reqObj) {
         logger.info("Request to get google mfa for user: {}", reqObj.get("userName").asText());
         if (StringUtils.isBlank(reqObj.get("userName").asText())) {
@@ -841,7 +841,7 @@ public class UserController implements IApiController {
         }
     }
 
-    @RequestMapping(value = "/authenticate-mfa", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/authenticateMfa", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> authenticateGoogleMfa(@RequestBody ObjectNode reqObj) {
         logger.error("Request to authenticate google MFA token");
 
@@ -891,7 +891,7 @@ public class UserController implements IApiController {
         }
     }
 
-    @RequestMapping(value = "/disable-mfa", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    @RequestMapping(value = "/disableMfa", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Object> disableGoogleMfa(@RequestBody ObjectNode reqObj) {
         logger.error("Request to disable google MFA");
 
