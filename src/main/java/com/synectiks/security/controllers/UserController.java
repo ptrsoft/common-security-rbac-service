@@ -18,7 +18,11 @@ import com.synectiks.security.service.DocumentService;
 import com.synectiks.security.util.IUtils;
 import com.synectiks.security.util.RandomGenerator;
 import com.synectiks.security.util.TemplateReader;
+import com.warrenstrange.googleauth.GoogleAuthenticator;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -31,7 +35,6 @@ import org.springframework.data.domain.Sort.Direction;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
@@ -800,6 +803,140 @@ public class UserController implements IApiController {
 		Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Team list", user);
         return ResponseEntity.status(HttpStatus.OK).body(st);
 	}
+
+    @RequestMapping(path = "/mfa-code", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> getMfaCode(@RequestBody ObjectNode reqObj) {
+        logger.info("Request to get google mfa for user: {}", reqObj.get("userName").asText());
+        if (StringUtils.isBlank(reqObj.get("userName").asText())) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User name not provided", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        if (StringUtils.isBlank(reqObj.get("password").asText())) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Password not provided", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        try {
+            UsernamePasswordToken token = new UsernamePasswordToken();
+            token.setUsername(reqObj.get("userName").asText());
+            token.setPassword(reqObj.get("password").asText().toCharArray());
+            AuthenticationInfo info = SecurityUtils.getSecurityManager().authenticate(token);
+
+            String mfaKey = googleMultiFactorAuthenticationService.getGoogleAuthenticationKey(reqObj.get("userName").asText());
+            int size = 125;
+            String fileType = "png";
+            String keyUri = googleMultiFactorAuthenticationService.generateGoogleAuthenticationUri(reqObj.get("userName").asText(),
+                "Synectiks ", mfaKey);
+
+            File tempFile = File.createTempFile(reqObj.get("userName").asText(), "."+fileType);
+            googleMultiFactorAuthenticationService.createQRImage(tempFile, keyUri, size, fileType);
+            Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google MFA QR code created successfully",Files.readAllBytes(tempFile.toPath()));
+            st.setMfaKey(mfaKey);
+            tempFile.deleteOnExit();
+            return ResponseEntity.status(HttpStatus.OK).body(st);
+        } catch (Exception e) {
+            String errMsg = "Exception in getting mfa";
+            logger.error(errMsg+": ", e);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR",errMsg, null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+    }
+
+    @RequestMapping(value = "/authenticate-mfa", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> authenticateGoogleMfa(@RequestBody ObjectNode reqObj) {
+        logger.error("Request to authenticate google MFA token");
+
+        if (StringUtils.isBlank(reqObj.get("userName").asText())) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User name not provided", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        if (StringUtils.isBlank(reqObj.get("token").asText())) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","MFA token not provided", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+
+        try {
+            User user = this.userRepository.findByUsername(reqObj.get("userName").asText());
+            if(user == null){
+                Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found. User name : "+reqObj.get("userName").asText(), null);
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+            }
+            GoogleAuthenticator gAuth = new GoogleAuthenticator();
+            boolean matches = false;
+            if(!StringUtils.isBlank(user.getIsMfaEnable()) && Constants.YES.equalsIgnoreCase(user.getIsMfaEnable())){
+                matches = gAuth.authorize(user.getGoogleMfaKey(), Integer.parseInt(reqObj.get("token").asText()));
+                if(matches) {
+                    logger.debug("Google mfa authentication successful");
+                }else {
+                    logger.warn("Google mfa authentication failed");
+                }
+            }else{
+                matches = gAuth.authorize(reqObj.get("mfaKey").asText(), Integer.parseInt(reqObj.get("token").asText()));
+                if(matches){
+                    logger.info("Google MFA authentication successful for user {}",reqObj.get("userName").asText());
+                    user.setIsMfaEnable(Constants.YES);
+                    user.setGoogleMfaKey(reqObj.get("mfaKey").asText());
+                    user = userRepository.save(user);
+                    logger.info("Google MFA is enabled for user: {}", reqObj.get("userName").asText());
+                }else{
+                    logger.warn("Google MFA token authentication failed while setting up MFA for user: {}", reqObj.get("userName").asText());
+                }
+
+            }
+            Status st = setMessage(HttpStatus.OK.value(), "SUCCESS",matches == true ? "Google MFA token authenticated" : "Google MFA token authentication failed", matches);
+            return ResponseEntity.status(HttpStatus.OK).body(st);
+        }catch(Exception e) {
+            logger.error("Exception in MFA authentication: ",e);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Exception in MFA authentication", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+    }
+
+    @RequestMapping(value = "/disable-mfa", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> disableGoogleMfa(@RequestBody ObjectNode reqObj) {
+        logger.error("Request to disable google MFA");
+
+        if (StringUtils.isBlank(reqObj.get("userName").asText())) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User name not provided",null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        if (StringUtils.isBlank(reqObj.get("token").asText())) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","MFA token not provided",null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+
+        try {
+            User user = this.userRepository.findByUsername(reqObj.get("userName").asText());
+            if(user == null){
+                Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found. User name : "+reqObj.get("userName").asText(), null);
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+            }
+            GoogleAuthenticator gAuth = new GoogleAuthenticator();
+            boolean matches = false;
+            Status st = null;
+            if(!StringUtils.isBlank(user.getIsMfaEnable()) && Constants.YES.equalsIgnoreCase(user.getIsMfaEnable())){
+                matches = gAuth.authorize(user.getGoogleMfaKey(), Integer.parseInt(reqObj.get("token").asText()));
+                if(matches) {
+                    logger.info("Google MFA authentication successful. Disabling MFA for user {}",reqObj.get("userName").asText());
+                    user.setIsMfaEnable(null);
+                    user.setGoogleMfaKey(null);
+                    user = userRepository.save(user);
+                    logger.info("Google MFA is disabled for user: {}", reqObj.get("userName").asText());
+                    st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google MFA token disabled", matches);
+                }else {
+                    logger.warn("Google mfa authentication failed");
+                    st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google MFA token authentication failed. MFA could not be disabled", matches);
+                }
+            }else{
+                logger.info("Google MFA is already disabled for user: {}", reqObj.get("userName").asText());
+                st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google MFA is already disabled", null);
+            }
+            return ResponseEntity.status(HttpStatus.OK).body(st);
+        }catch(Exception e) {
+            logger.error("Exception while disabling MFA token: ",e);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Exception while disabling MFA token", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+    }
 
 //	@RequestMapping(path = "/enableGoogleMfa")
 //	public ResponseEntity<Object> enableGoogleMfa(@RequestParam final String userName,

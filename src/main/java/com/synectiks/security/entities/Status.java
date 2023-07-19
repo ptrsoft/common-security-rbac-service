@@ -6,8 +6,18 @@ public class Status {
 	private String type;
 	private String message;
 	private Object object;
-	
-	public int getCode() {
+
+    private String mfaKey;
+
+    public String getMfaKey() {
+        return mfaKey;
+    }
+
+    public void setMfaKey(String mfaKey) {
+        this.mfaKey = mfaKey;
+    }
+
+    public int getCode() {
 		return code;
 	}
 	public void setCode(int code) {
@@ -31,5 +41,5 @@ public class Status {
 	public void setObject(Object object) {
 		this.object = object;
 	}
-	
+
 }
