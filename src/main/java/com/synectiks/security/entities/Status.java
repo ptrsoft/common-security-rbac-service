@@ -42,4 +42,13 @@ public class Status {
 		this.object = object;
 	}
 
+
+    public static Status build(int statusCode, String statusType, String msg, Object obj){
+        Status st = new Status();
+        st.setCode(statusCode);
+        st.setType(statusType);
+        st.setMessage(msg);
+        st.setObject(obj);
+        return st;
+    }
 }

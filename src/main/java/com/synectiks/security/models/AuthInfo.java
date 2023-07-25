@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.models;
 
@@ -72,7 +72,7 @@ public class AuthInfo implements Serializable {
 
 		private String name;
 		private String email;
-		
+
 		public String getName() {
 			return name;
 		}
@@ -99,8 +99,18 @@ public class AuthInfo implements Serializable {
 		private Credential credentials;
 		private String organization;
 		private User user;
-		
-		public Object getPrincipal() {
+
+        private String sessionId;
+
+        public String getSessionId() {
+            return sessionId;
+        }
+
+        public void setSessionId(String sessionId) {
+            this.sessionId = sessionId;
+        }
+
+        public Object getPrincipal() {
 			return principal;
 		}
 
@@ -140,8 +150,8 @@ public class AuthInfo implements Serializable {
 		private List<String> roles;
 		private List<String> permissions;
 		private Map<String, List<String>> mapPermissions;
-		
-		
+
+
 		public Map<String, List<String>> getMapPermissions() {
 			return mapPermissions;
 		}
@@ -168,26 +178,28 @@ public class AuthInfo implements Serializable {
 
 	}
 
-	public static AuthInfo create(AuthenticationInfo authenticationInfo, User usr) {
+	public static AuthInfo create(AuthenticationInfo authenticationInfo, User usr, String sessionId) {
 		if (!IUtils.isNull(authenticationInfo) && !IUtils.isNull(usr)) {
 			//Principal p = new Principal();
 			//p.setLogin(info.getPrincipals().);
 			AuthInfo authInfo = new AuthInfo();
-			
+
 			Info info = new Info();
 			Principal principal = new Principal();
 			principal.setLogin(authenticationInfo.getPrincipals().getPrimaryPrincipal().toString());
-			principal.setApiKey(usr.getPassword());
+//			principal.setApiKey(usr.getPassword());
 			info.setPrincipal(principal);
 			if(usr.getOrganization() != null) {
 				info.setOrganization(usr.getOrganization().getName());
 			}
+            usr.setPassword(null);
 			info.setUser(usr);
-			
+
 			Credential cred = new Credential();
 			cred.setEmail(usr.getEmail());
 			cred.setName(usr.getUsername());
 			info.setCredentials(cred);
+            info.setSessionId(sessionId);
 			authInfo.setInfo(info);
 			List<String> rolesList = new ArrayList<>();
 			List<String> permissionList = new ArrayList<>();
@@ -222,7 +234,7 @@ public class AuthInfo implements Serializable {
 					}
 					perms.add(p.getPermission());
 				}
-	
+
 			}
 		}
 	}

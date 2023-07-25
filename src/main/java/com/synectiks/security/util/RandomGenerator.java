@@ -1,6 +1,8 @@
 package com.synectiks.security.util;
 
+import java.io.Serializable;
 import java.util.Random;
+import java.util.UUID;
 
 import org.apache.commons.lang3.RandomStringUtils;
 
@@ -17,19 +19,26 @@ public class RandomGenerator {
 	      .limit(targetStringLength)
 	      .collect(StringBuilder::new, StringBuilder::appendCodePoint, StringBuilder::append)
 	      .toString();
-	    
+
 	    System.out.println(generatedString);
 	    return generatedString;
 	}
-	
+
 	public static String getTemporaryPassword() {
 		String characters = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 		String pwd = RandomStringUtils.random( 15, characters );
 		System.out.println( pwd );
 		return pwd;
 	}
-	
+
+    private static Serializable generateSessionId() {
+        // Implement your session ID generation logic here
+        // For simplicity, you can use UUID.randomUUID() or any other suitable method
+        UUID uuid =  UUID.randomUUID();
+        System.out.println(uuid.toString());
+        return uuid;
+    }
 	public static void main(String a[]) {
-		getTemporaryPassword();
+        generateSessionId();
 	}
 }

@@ -1,20 +1,20 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.config;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.util.LinkedHashMap;
-import java.util.Map;
-import java.util.Properties;
-
+import com.synectiks.security.models.SecurityRule;
+import com.synectiks.security.util.IUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.apache.shiro.authc.credential.PasswordMatcher;
 import org.apache.shiro.realm.Realm;
+import org.apache.shiro.session.mgt.SessionManager;
+import org.apache.shiro.session.mgt.eis.MemorySessionDAO;
 import org.apache.shiro.spring.LifecycleBeanPostProcessor;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
@@ -23,8 +23,11 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
 
-import com.synectiks.security.models.SecurityRule;
-import com.synectiks.security.util.IUtils;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.LinkedHashMap;
+import java.util.Map;
+import java.util.Properties;
 
 /**
  * @author Rajesh
@@ -39,24 +42,11 @@ public class SynectiksSecurityConfig {
 	@Value("${synectiks.shiro.public.urls}")
 	private String publicUrls;
 
-	/*@Bean
-	public ShiroFilterChainDefinition shiroFilterChainDefinition() {
-		DefaultShiroFilterChainDefinition filter = new DefaultShiroFilterChainDefinition();
-		// String secureUrls = env.getProperty(IConsts.SECURE_URLS, "");
-		// Add secure urls
-		List<String> lst = IUtils.getListFromString(secureUrls, null);
-		lst.forEach(item -> {
-			filter.addPathDefinition(item, "rest");
-		});
-		// String publicUrls = env.getProperty(IConsts.PUBLIC_URLS, "");
-		// add public urls
-		lst = IUtils.getListFromString(publicUrls, null);
-		lst.forEach(item -> {
-			filter.addPathDefinition(item, "anon");
-		});
+    @Value("${synectiks.session.timeout}")
+    private Long sessionTimeout;
 
-		return filter;
-	}*/
+    private static final long MILLIS_PER_SECOND = 1000L;
+    private static final long MILLIS_PER_MINUTE = 60000L;
 
 	/**
 	 * Alternate properties loader to dynamically load properties into config
@@ -84,8 +74,10 @@ public class SynectiksSecurityConfig {
 			if (!IUtils.isNull(props)) {
 				secureUrls = props.getProperty("synectiks.shiro.secure.urls");
 				publicUrls = props.getProperty("synectiks.shiro.public.urls");
+                sessionTimeout = !StringUtils.isBlank(props.getProperty("synectiks.session.timeout")) ? Long.parseLong(props.getProperty("synectiks.session.timeout")) : 30L;
 			}
 		}
+        logger.info("Session timeout : {}",sessionTimeout);
 	}
 
 	@Bean
@@ -134,9 +126,10 @@ public class SynectiksSecurityConfig {
 
 	@Bean
 	public DefaultWebSecurityManager securityManager() {
-		final DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
-		securityManager.setRealm(realm());
-		return securityManager;
+	   DefaultWebSecurityManager securityManager = new DefaultWebSecurityManager();
+       securityManager.setRealm(realm());
+       securityManager.setSessionManager(sessionManager());
+       return securityManager;
 	}
 
 	@Bean
@@ -169,5 +162,21 @@ public class SynectiksSecurityConfig {
 	public LifecycleBeanPostProcessor lifecycleBeanPostProcessor() {
 		return new LifecycleBeanPostProcessor();
 	}
+
+    @Bean
+    public SessionManager sessionManager() {
+        DefaultWebSessionManager sessionManager = new DefaultWebSessionManager();
+        sessionManager.setGlobalSessionTimeout(sessionTimeout * MILLIS_PER_MINUTE);
+        sessionManager.setDeleteInvalidSessions(true);
+        sessionManager.setSessionValidationSchedulerEnabled(true);
+        sessionManager.setSessionValidationInterval(sessionTimeout * MILLIS_PER_MINUTE);
+        sessionManager.setSessionDAO(sessionDAO());
+        return sessionManager;
+    }
+
+    @Bean
+    public MemorySessionDAO sessionDAO() {
+        return new MemorySessionDAO();
+    }
 
 }

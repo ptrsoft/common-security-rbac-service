@@ -3,42 +3,9 @@
  */
 package com.synectiks.security.controllers;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.AuthenticationException;
-import org.apache.shiro.authc.AuthenticationInfo;
-import org.apache.shiro.authc.IncorrectCredentialsException;
-import org.apache.shiro.authc.LockedAccountException;
-import org.apache.shiro.authc.UnknownAccountException;
-import org.apache.shiro.authc.UsernamePasswordToken;
-import org.apache.shiro.authc.credential.DefaultPasswordService;
-import org.apache.shiro.subject.Subject;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Example;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
-import org.springframework.web.bind.annotation.RestController;
-
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.Constants;
 import com.synectiks.security.entities.Document;
-import com.synectiks.security.entities.Organization;
 import com.synectiks.security.entities.User;
 import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.mfa.GoogleMultiFactorAuthenticationService;
@@ -48,7 +15,30 @@ import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.UserRepository;
 import com.synectiks.security.service.DocumentService;
 import com.synectiks.security.util.IUtils;
-import com.warrenstrange.googleauth.GoogleAuthenticator;
+import org.apache.commons.lang3.StringUtils;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.*;
+import org.apache.shiro.authc.credential.DefaultPasswordService;
+import org.apache.shiro.session.Session;
+import org.apache.shiro.session.mgt.eis.MemorySessionDAO;
+import org.apache.shiro.subject.Subject;
+import org.apache.shiro.util.ThreadContext;
+import org.apache.shiro.web.mgt.DefaultWebSecurityManager;
+import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.*;
+
+import java.io.IOException;
+import java.io.Serializable;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.util.*;
 
 /**
  * @author Rajesh
@@ -61,10 +51,10 @@ public class SecurityController {
 	private static final Logger logger = LoggerFactory.getLogger(SecurityController.class);
 	private static final String SUC_MSG = "{\"message\": \"SUCCESS\"}";
 
-	private DefaultPasswordService pswdService = new DefaultPasswordService();
+	private DefaultPasswordService passwordService = new DefaultPasswordService();
 
 	@Autowired
-	private UserRepository users;
+	private UserRepository userRepository;
 
 	@Autowired
 	private OrganizationRepository organizationRepository;
@@ -73,14 +63,17 @@ public class SecurityController {
 	GoogleMultiFactorAuthenticationService googleMultiFactorAuthenticationService;
 	@Autowired
 	private DocumentService documentService;
-	@RequestMapping(value = "/login", method = RequestMethod.GET)
+
+    @Autowired
+    private DefaultWebSecurityManager defaultWebSecurityManager;
+
+    @RequestMapping(value = "/login", method = RequestMethod.GET)
 	public ResponseEntity<Object> login(@RequestParam  String username, @RequestParam String password,
 			@RequestParam(required = false) boolean rememberMe) throws IOException {
 		UsernamePasswordToken token = new UsernamePasswordToken();
 		token.setUsername(username);
 		token.setPassword(password.toCharArray());
 		token.setRememberMe(rememberMe);
-
 
 		return authenticate(token);
 	}
@@ -128,7 +121,7 @@ public class SecurityController {
 		return res.toString();
 	}
 
-	@RequestMapping(value = "/singin")
+	@RequestMapping(value = "/signin")
 	public ResponseEntity<Object> login(@RequestBody User user) throws IOException {
 		UsernamePasswordToken token = new UsernamePasswordToken();
 		token.setUsername(user.getUsername());
@@ -140,39 +133,51 @@ public class SecurityController {
 	@ResponseBody
     public ResponseEntity<Object> authenticate(@RequestBody final UsernamePasswordToken token) throws IOException {
         logger.info("Authenticating {}", token.getUsername());
-        final Subject subject = SecurityUtils.getSubject();
+        Map<Object, Object> resourceMap = ThreadContext.getResources();
+        deleteExistingUserSession(token.getUsername(), resourceMap);
+        Subject subject = (Subject)ThreadContext.get(token.getUsername());
+        if (subject == null) {
+            subject = (new Subject.Builder()).buildSubject();
+            ThreadContext.put(token.getUsername(), subject);
+        }
+
         String res = null;
         AuthInfo authInfo;
 		try {
-            subject.login(token);
             AuthenticationInfo info = SecurityUtils.getSecurityManager().authenticate(token);
-            User usr = users.findByUsername(token.getUsername());
+            subject.login(token);
+
+            Session session = subject.getSession();
+            logger.info("Users session id: {}",session.getId());
+            subject.getSession().setAttribute(token.getUsername(), session.getId());
+
+            User usr = userRepository.findByUsername(token.getUsername());
 
             if(StringUtils.isBlank(usr.getIsMfaEnable())) {
             	usr.setIsMfaEnable(Constants.NO);
             }
             getDocumentList(usr);
 			setProfileImage(usr);
-            authInfo = AuthInfo.create(info, usr);
+            authInfo = AuthInfo.create(info, usr, passwordService.encryptPassword(session.getId().toString()));
             res = IUtils.getStringFromValue(authInfo);
             logger.info(res);
             //if no exception, that's it, we're done!
         } catch (UnknownAccountException th) {
             //username wasn't in the system, show them an error message?
 			logger.error(th.getMessage(), th);
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
         } catch (IncorrectCredentialsException th) {
             //password didn't match, try again?
 			logger.error(th.getMessage(), th);
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
         } catch (LockedAccountException th) {
             //account for that username is locked - can't login.  Show them a message?
 			logger.error(th.getMessage(), th);
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
         } catch (AuthenticationException th) {
         	// General exception thrown due to an error during the Authentication process
 			logger.error(th.getMessage(), th);
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
         }
         return ResponseEntity.status(HttpStatus.OK).body(authInfo);
     }
@@ -183,7 +188,7 @@ public class SecurityController {
         logger.info("Authenticating user: {}", userName);
         User usr = null;
         try {
-            usr = users.findByUsername(userName);
+            usr = userRepository.findByUsername(userName);
             if(usr == null) {
             	logger.error("User not found");
     			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("User not found");
@@ -210,17 +215,49 @@ public class SecurityController {
     }
 
 	@RequestMapping(value = "/logout", method = RequestMethod.GET)
-	public String logout() {
-		SecurityUtils.getSubject().logout();
-		return SUC_MSG;
+	public ResponseEntity<Object> logout(@RequestParam final String userName) {
+        Map<Object, Object> resourceMap = ThreadContext.getResources();
+        Session userSession = deleteExistingUserSession(userName, resourceMap);
+        ThreadContext.setResources(resourceMap);
+        if(userSession != null){
+            Status st = new Status(HttpStatus.OK.value(), "User: "+userName+ " logged out successfully", true);
+            return ResponseEntity.status(HttpStatus.OK).body(st);
+        }
+        Status st = new Status(601, "Session already expired", false);
+        return ResponseEntity.status(HttpStatus.OK).body(st);
 	}
 
+    private Session deleteExistingUserSession(String userName, Map<Object, Object> resourceMap) {
+        Session userSession = null;
+        for(Map.Entry<Object,Object> entry : resourceMap.entrySet()){
+            if(!StringUtils.isBlank((String)entry.getKey())
+                && ((String)entry.getKey()).contains("_SECURITY_MANAGER_KEY")){
+                DefaultWebSecurityManager securityManager = (DefaultWebSecurityManager) entry.getValue();
+                DefaultWebSessionManager sessionManager = (DefaultWebSessionManager)securityManager.getSessionManager();
+                MemorySessionDAO sessionDAO = (MemorySessionDAO)sessionManager.getSessionDAO();
+                for(Session session: sessionDAO.getActiveSessions()){
+                    if(session.getAttribute(userName) != null
+                        && session.getId().equals((Serializable) session.getAttribute(userName))){
+                        session.removeAttribute(userName);
+                        sessionDAO.delete(session);
+                        sessionManager.setSessionDAO(sessionDAO);
+                        securityManager.setSessionManager(sessionManager);
+                        resourceMap.put(entry.getKey(),securityManager);
+                        userSession = session;
+                        break;
+                    }
+                }
+            }
+        }
+        return userSession;
+    }
 
-	@RequestMapping(value = "/importUser")
+
+    @RequestMapping(value = "/importUser")
 	public ResponseEntity<Object> importUser(@RequestBody List<String> list) {
 
 		try {
-			List<User> existingUsers = (List<User>) users.findAll();
+			List<User> existingUsers = (List<User>) userRepository.findAll();
 			for(User user: existingUsers) {
 				if(list.contains(user.getEmail())) {
 					list.remove(user.getEmail());
@@ -233,13 +270,13 @@ public class SecurityController {
 				entity.setEmail(userId);
 				entity.setUsername(userId);
 				entity.setActive(true);
-				entity.setPassword(pswdService.encryptPassword("welcome"));
+				entity.setPassword(passwordService.encryptPassword("welcome"));
 //				entity.setCreatedAt(new Date(System.currentTimeMillis()));
 				entity.setCreatedBy("APPLICATION");
 				newUsers.add(entity);
 
 			}
-			users.saveAll(newUsers);
+			userRepository.saveAll(newUsers);
 			logger.info("All users successfully saved in security db" );
 
 		} catch (Throwable th) {
@@ -250,49 +287,72 @@ public class SecurityController {
 		return ResponseEntity.status(HttpStatus.CREATED).body("SUCCESS");
 	}
 
+    @RequestMapping(value = "/authenticateSession", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> authenticateUserSession(@RequestBody ObjectNode reqObj) {
+        logger.error("Request to authenticate user session");
 
-//	@RequestMapping(value = "/authenticateGoogleMfa")
-//	@ResponseBody
-//    public ResponseEntity<Object> authenticateGoogleMfa(@RequestParam final String userName,
-//    		@RequestParam final String organizationName, @RequestParam final String mfaCode) {
-//		logger.error("Request to authenticate google mfa token");
-//		try {
-//			User user = new User();
-//			user.setUsername(userName);
-//			user.setActive(true);
-//
-//			Organization organization = new Organization();
-//			organization.setName(organizationName);
-//			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
-//			if(!oOrg.isPresent()) {
-//				logger.error("Organization not found. Organization: {}", organizationName);
-//				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
-//			}
-//			user.setOrganization(oOrg.get());
-//
-//			Optional<User> oUser = users.findOne(Example.of(user));
-//			if(!oUser.isPresent()) {
-//				logger.error("User not found. User: {}, Organization: {}", userName, organizationName);
-//				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
-//			}
-//			user = oUser.get();
-//
-//
-//			GoogleAuthenticator gAuth = new GoogleAuthenticator();
-//			boolean matches = gAuth.authorize(user.getGoogleMfaKey(), Integer.parseInt(mfaCode));
-//			if(matches) {
-//				logger.info("Google mfa token authentication success");
-//			}else {
-//				logger.info("Google mfa token authentication failed");
-//			}
-//
-//			return ResponseEntity.status(HttpStatus.OK).body(matches);
-//		}catch(Exception e) {
-//			logger.error("Exception in authenticateGoogleMfa: ",e);
-//			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
-//		}
-//
-//
-//    }
+        if (reqObj.get("userName") == null || (reqObj.get("userName") != null && StringUtils.isBlank(reqObj.get("userName").asText()))) {
+            Status st = new Status(HttpStatus.PRECONDITION_REQUIRED.value(),"User name required", false);
+            return ResponseEntity.status(HttpStatus.PRECONDITION_REQUIRED).body(st);
+        }
+        Map<Object, Object> resourceMap = ThreadContext.getResources();
+        boolean isAuthenticated = false;
+        for(Map.Entry<Object,Object> entry : resourceMap.entrySet()){
+            if(!StringUtils.isBlank((String)entry.getKey())
+            && ((String)entry.getKey()).contains("_SECURITY_MANAGER_KEY")){
+                DefaultWebSecurityManager securityManager = (DefaultWebSecurityManager) entry.getValue();
+                Collection<Session> activeSession = ((DefaultWebSessionManager)securityManager.getSessionManager()).getSessionDAO().getActiveSessions();
+                for(Session session: activeSession){
+                    if(session.getAttribute(reqObj.get("userName").asText()) != null
+                        && session.getId().equals((Serializable) session.getAttribute(reqObj.get("userName").asText()))){
+                        isAuthenticated = true;
+                        break;
+                    }
+                }
+            }
+        }
+        if(isAuthenticated){
+            Status st = new Status(HttpStatus.OK.value(), "Session found", true);
+            return ResponseEntity.status(HttpStatus.OK).body(st);
+        }
+        Status st = new Status(600, "Session not found", false);
+        return ResponseEntity.status(HttpStatus.OK).body(st);
 
+    }
+
+    private class Status{
+        private int code;
+        private String message;
+        private boolean isAuthenticated;
+
+        public int getCode() {
+            return code;
+        }
+
+        public void setCode(int code) {
+            this.code = code;
+        }
+
+        public String getMessage() {
+            return message;
+        }
+
+        public void setMessage(String message) {
+            this.message = message;
+        }
+
+        public boolean isAuthenticated() {
+            return isAuthenticated;
+        }
+
+        public void setAuthenticated(boolean authenticated) {
+            isAuthenticated = authenticated;
+        }
+
+        public Status(int code, String message, boolean isAuthenticated){
+            this.code = code;
+            this.message = message;
+            this.isAuthenticated = isAuthenticated;
+        }
+    }
 }
