@@ -13,26 +13,26 @@ import javax.crypto.spec.SecretKeySpec;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
- 
+
 public class EncryptionDecription {
-	
+
 	private static final Logger logger = LoggerFactory.getLogger(EncryptionDecription.class);
 	private static final String SECRET_KEY = "BLACKANDWHITE";
 	private static final String SALT = "applegingerlemon!!!!";
 	private static final String SECRET_ALGO_KEY = "PBKDF2WithHmacSHA256";
 	private static final String ALGO = "AES";
 	private static final String CIPHER_CODE = "AES/CBC/PKCS5Padding";
-	
+
 	public static String encrypt(String strToEncrypt) {
 		try {
 	      byte[] iv = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	      IvParameterSpec ivspec = new IvParameterSpec(iv);
-	 
+
 	      SecretKeyFactory factory = SecretKeyFactory.getInstance(SECRET_ALGO_KEY);
 	      KeySpec spec = new PBEKeySpec(SECRET_KEY.toCharArray(), SALT.getBytes(), 65536, 256);
 	      SecretKey tmp = factory.generateSecret(spec);
 	      SecretKeySpec secretKey = new SecretKeySpec(tmp.getEncoded(), ALGO);
-	 
+
 	      Cipher cipher = Cipher.getInstance(CIPHER_CODE);
 	      cipher.init(Cipher.ENCRYPT_MODE, secretKey, ivspec);
 	      return Base64.getEncoder()
@@ -42,17 +42,17 @@ public class EncryptionDecription {
 		}
 		return null;
 	}
-  
+
 	public static String decrypt(String strToDecrypt) {
 		try {
 	      byte[] iv = {0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
 	      IvParameterSpec ivspec = new IvParameterSpec(iv);
-	 
+
 	      SecretKeyFactory factory = SecretKeyFactory.getInstance(SECRET_ALGO_KEY);
 	      KeySpec spec = new PBEKeySpec(SECRET_KEY.toCharArray(), SALT.getBytes(), 65536, 256);
 	      SecretKey tmp = factory.generateSecret(spec);
 	      SecretKeySpec secretKey = new SecretKeySpec(tmp.getEncoded(), ALGO);
-	 
+
 	      Cipher cipher = Cipher.getInstance(CIPHER_CODE);
 	      cipher.init(Cipher.DECRYPT_MODE, secretKey, ivspec);
 	      return new String(cipher.doFinal(Base64.getDecoder().decode(strToDecrypt)));
@@ -61,9 +61,9 @@ public class EncryptionDecription {
 	    }
 	    return null;
 	}
-  
+
 	public static void main(String a[]) {
-		String enc = encrypt("manojkr.joshi@gmail.com");
+		String enc = encrypt("xyz");
 		System.out.println(enc);
 		String dec = decrypt(enc);
 		System.out.println(dec);

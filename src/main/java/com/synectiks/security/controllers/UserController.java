@@ -18,11 +18,11 @@ import com.synectiks.security.service.DocumentService;
 import com.synectiks.security.util.IUtils;
 import com.synectiks.security.util.RandomGenerator;
 import com.synectiks.security.util.TemplateReader;
+import com.synectiks.security.util.Token;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.AuthenticationInfo;
-import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authc.*;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -936,6 +936,67 @@ public class UserController implements IApiController {
             Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Exception while disabling MFA token", null);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
         }
+    }
+
+
+    @RequestMapping(value = "/reset-password")
+    public ResponseEntity<Object> resetPassword(@RequestBody ObjectNode reqObje) throws IOException {
+        String userName = reqObje.get("userName").asText();
+        User user = this.userRepository.findByUsername(userName);
+        if (user == null) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found. User Name: "+userName, null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+
+        String ourToken = Token.get(userName);
+        if(StringUtils.isBlank(ourToken)){
+            logger.error("Token not found");
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Invalid token: ", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        String token = reqObje.get("token").asText();
+        if(StringUtils.isBlank(token) || !ourToken.equals(token)){
+            logger.error("Invalid token");
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Invalid token: ", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+
+//        String oldPassword = reqObje.get("oldPassword").asText();
+//
+//        UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken();
+//        usernamePasswordToken.setUsername(user.getUsername());
+//        usernamePasswordToken.setPassword(oldPassword.toCharArray());
+//
+//        try{
+//            AuthenticationInfo info = SecurityUtils.getSecurityManager().authenticate(usernamePasswordToken);
+//        } catch (UnknownAccountException th) {
+//            Token.remove(userName);
+//            logger.error(th.getMessage(), th);
+//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","UnknownAccountException: ", th);
+//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//        } catch (IncorrectCredentialsException th) {
+//            Token.remove(userName);
+//            logger.error(th.getMessage(), th);
+//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","IncorrectCredentialsException: ", th);
+//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//        } catch (LockedAccountException th) {
+//            Token.remove(userName);
+//            logger.error(th.getMessage(), th);
+//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","LockedAccountException: ", th);
+//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//        } catch (AuthenticationException th) {
+//            Token.remove(userName);
+//            logger.error(th.getMessage(), th);
+//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","AuthenticationException: ", th);
+//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//        }
+
+        String newPassword = reqObje.get("newPassword").asText();
+        user.setPassword(pswdService.encryptPassword(newPassword));
+        userRepository.save(user);
+        Token.remove(userName);
+        Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "SUCCESS","Password changed successfully: ", null);
+        return ResponseEntity.status(HttpStatus.OK).body(st);
     }
 
 //	@RequestMapping(path = "/enableGoogleMfa")
