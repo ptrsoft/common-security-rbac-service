@@ -995,7 +995,7 @@ public class UserController implements IApiController {
         user.setPassword(pswdService.encryptPassword(newPassword));
         userRepository.save(user);
         Token.remove(userName);
-        Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "SUCCESS","Password changed successfully: ", null);
+        Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Password changed successfully: ", null);
         return ResponseEntity.status(HttpStatus.OK).body(st);
     }
 
