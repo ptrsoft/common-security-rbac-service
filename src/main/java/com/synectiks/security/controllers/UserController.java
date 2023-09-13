@@ -158,7 +158,7 @@ public class UserController implements IApiController {
             user.setCreatedAt(currentDate);
             user.setUpdatedAt(currentDate);
 
-//			saveOrUpdateOrganization(organization, user, currentDate);
+			saveOrUpdateOrganization(organization, user, currentDate);
             user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
             user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
 
