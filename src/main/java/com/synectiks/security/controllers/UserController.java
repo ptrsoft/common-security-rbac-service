@@ -132,7 +132,8 @@ public class UserController implements IApiController {
                                          @RequestParam("password") String password,
                                          @RequestParam(name = "email", required = false) String email,
 			@RequestParam(name = "file", required = false) MultipartFile file, HttpServletRequest request) {
-		User user = this.userRepository.findByUsername(username);
+        // check if user already exists
+        User user = this.userRepository.findByUsername(username);
 		if (user != null) {
             Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Login id already exists", null);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
@@ -145,29 +146,32 @@ public class UserController implements IApiController {
             Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
+
+        // check if organization already present
+        if (!StringUtils.isBlank(organization)) {
+            Organization orgObj = new Organization();
+            orgObj.setName(organization.toUpperCase());
+            Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(orgObj));
+            if (oOrg.isPresent()) {
+                logger.error("Organization already exists");
+                Status st = setMessage(HttpStatus.valueOf(418).value(), "ERROR","Organization already exists", null);
+                return ResponseEntity.status(HttpStatus.valueOf(418)).body(st);
+            }
+        }
+
 		user = new User();
 		try {
+
+            saveOrUpdateOrganization(organization, user);
 //			String signedInUser = IUtils.getUserFromRequest(request);
 //			user = IUtils.createEntity(service, signedInUser, User.class);
-			createUserFromJson(user, type, organization, username, password, email);
-			// Encrypt the password
-			if (!IUtils.isNullOrEmpty(user.getPassword()) && !user.getPassword().startsWith("$shiro1$")) {
-				user.setPassword(pswdService.encryptPassword(user.getPassword()));
-			}
-			Date currentDate = new Date();
-            user.setCreatedAt(currentDate);
-            user.setUpdatedAt(currentDate);
+			createUser(user, type, username, password, email);
 
-			saveOrUpdateOrganization(organization, user, currentDate);
-            user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
-            user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-
-			logger.info("Saving user: " + user);
+            logger.info("Saving user: " + user);
 			user = userRepository.save(user);
-			addProfileImage(file, user, currentDate);
+			addProfileImage(file, user);
 			getDocumentList(user);
 		} catch (Throwable th) {
-			th.printStackTrace();
 			logger.error("Exception: ",th);
             Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Service issues. User data cannot be saved", null);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
@@ -188,7 +192,7 @@ public class UserController implements IApiController {
 		user.setDocumentList(finalDocList);
 	}
 
-	private void addProfileImage(MultipartFile file, User user, Date currentDate) throws IOException {
+	private void addProfileImage(MultipartFile file, User user) throws IOException {
 		if (file != null) {
 			byte[] bytes = file.getBytes();
 			String orgFileName = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename());
@@ -218,7 +222,7 @@ public class UserController implements IApiController {
 //			document.setSourceOfOrigin(this.getClass().getSimpleName());
 			document.setSourceId(user.getId().toString());
 			document.setIdentifier(Constants.IDENTIFIER_PROFILE_IMAGE);
-			document.setCreatedOn(currentDate);
+			document.setCreatedOn(user.getCreatedAt());
 			document.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
 			document.setCreatedBy(user.getCreatedBy());
 			document.setUpdatedOn(user.getUpdatedAt());
@@ -314,40 +318,33 @@ public class UserController implements IApiController {
 		return ResponseEntity.status(HttpStatus.OK).body(user);
 	}
 
-	private void saveOrUpdateOrganization(String orgName, User user, Date currentDate) throws URISyntaxException {
+	private void saveOrUpdateOrganization(String orgName, User user) throws URISyntaxException {
+        logger.info("Saving new organization: " + orgName);
 		if (!StringUtils.isBlank(orgName)) {
 			Organization organization = new Organization();
 			organization.setName(orgName.toUpperCase());
-			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
-			if (oOrg.isPresent()) {
-				user.setOrganization(oOrg.get());
-			} else {
-				logger.info("Saving new organization: " + organization);
-				organization.setCreatedAt(currentDate);
-				organization.setUpdatedAt(currentDate);
-                organization.setCreatedBy(user.getCreatedBy());
-                organization.setUpdatedBy(user.getUpdatedBy());
+            organization.setCreatedAt(user.getCreatedAt());
+            organization.setUpdatedAt(user.getUpdatedAt());
+            organization.setCreatedBy(user.getCreatedBy());
+            organization.setUpdatedBy(user.getUpdatedBy());
 
-				organization = this.organizationRepository.save(organization);
+            organization = this.organizationRepository.save(organization);
 
-				URI uri = new URI(cmdbOrgUrl);
-				Organization org = new Organization();
-				org.setName(organization.getName());
-				org.setSecurityServiceOrgId(organization.getId());
-				ResponseEntity<Organization> result = restTemplate.postForEntity(uri, org, Organization.class);
-                if(result != null && result.getBody() != null){
-                    try{
-                        Organization cmdbOrg = result.getBody();
-                        organization.setCmdbOrgId(cmdbOrg.getId());
-                        organization = this.organizationRepository.save(organization);
-                        user.setOrganization(organization);
-                    }catch (Exception e){
-                        logger.error("Organization could not be retrieved from dmdb: ",e);
-                        user.setOrganization(organization);
-                    }
-
+            URI uri = new URI(cmdbOrgUrl);
+            Organization org = new Organization();
+            org.setName(organization.getName());
+            org.setSecurityServiceOrgId(organization.getId());
+            ResponseEntity<Organization> result = restTemplate.postForEntity(uri, org, Organization.class);
+            if(result != null && result.getBody() != null){
+                try{
+                    Organization cmdbOrg = result.getBody();
+                    organization.setCmdbOrgId(cmdbOrg.getId());
+                    organization = this.organizationRepository.save(organization);
+                    user.setOrganization(organization);
+                }catch (Exception e){
+                    logger.error("Organization could not be retrieved from dmdb: ",e);
+                    user.setOrganization(organization);
                 }
-
             }
 		}
 	}
@@ -455,32 +452,37 @@ public class UserController implements IApiController {
 		return ResponseEntity.status(HttpStatus.OK).body(list);
 	}
 
-	private void createUserFromJson(User user, String type, String organization, String username, String password, String email) {
+	private void createUser(User user, String type, String username, String password, String email) {
 		if (!StringUtils.isBlank(type)) {
 			user.setType(type);
 		}
 		if (!StringUtils.isBlank(username)) {
 			user.setUsername(username);
 		}
-		if (!StringUtils.isBlank(password)) {
-			user.setPassword(password);
-		}
-//		if (reqObj.get("active") != null) {
-			user.setActive(true);
-//		}
+        if (!IUtils.isNullOrEmpty(password) && !password.startsWith("$shiro1$")) {
+            user.setPassword(pswdService.encryptPassword(password));
+        }
+        Date currentDate = new Date();
+        user.setCreatedAt(currentDate);
+        user.setUpdatedAt(currentDate);
+
+        user.setActive(true);
+
 		if (!StringUtils.isBlank(email)) {
 			user.setEmail(email);
 		}
+        user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
+        user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
 
 //		user.setOwnerId(reqObj.get("ownerId") != null ? reqObj.get("ownerId").asLong() : null);
-		if (!StringUtils.isBlank(organization)) {
-			Organization org = new Organization();
-            org.setName(organization.toUpperCase());
-			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(org));
-			if (oOrg.isPresent()) {
-				user.setOrganization(oOrg.get());
-			}
-		}
+//		if (!StringUtils.isBlank(organization)) {
+//			Organization org = new Organization();
+//            org.setName(organization.toUpperCase());
+//			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(org));
+//			if (oOrg.isPresent()) {
+//				user.setOrganization(oOrg.get());
+//			}
+//		}
 	}
 
 	@RequestMapping(path = "/updateOrganization", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
