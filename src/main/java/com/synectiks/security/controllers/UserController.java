@@ -141,7 +141,7 @@ public class UserController implements IApiController {
 		// check for duplicate email
 		user = new User();
 		user.setEmail(email);
-		Optional<User> oUser = this.userRepository.findOne(Example.of(user));
+        Optional<User> oUser = this.userRepository.findOne(Example.of(user));
 		if (oUser.isPresent()) {
             Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
@@ -178,6 +178,58 @@ public class UserController implements IApiController {
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(user);
 	}
+
+    @RequestMapping(IConsts.API_CREATE+"/new-org-user")
+    public ResponseEntity<Object> createNewOrgUser(@RequestParam(name = "organization", required = true) String organization,
+                                                   @RequestParam(name = "email", required = true) String email,
+                                                   HttpServletRequest request) {
+        User user = new User();
+        try{
+            // check if user already exists
+            logger.info("Checking user email in active users");
+            user.setEmail(email);
+            user.setActive(true);
+            Optional<User> oUser = this.userRepository.findOne(Example.of(user));
+            if (oUser.isPresent()) {
+                logger.error("Email already exists in active users");
+                Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+            }else{
+                logger.info("Checking user email in inactive users");
+                user.setActive(false);
+                oUser = this.userRepository.findOne(Example.of(user));
+                if (oUser.isPresent()) {
+                    logger.error("Email already exists in inactive users");
+                    Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
+                    return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+                }
+            }
+        }catch (IncorrectResultSizeDataAccessException e ){
+            logger.error("Email already exists");
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+
+        if (!StringUtils.isBlank(organization)) {
+            Organization orgObj = new Organization();
+            orgObj.setName(organization.toUpperCase());
+            Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(orgObj));
+            if (oOrg.isPresent()) {
+                user.setOrganization(oOrg.get());
+            }
+        }
+        try {
+            createUser(user, "NEW_ORG_USER_REQUEST", null, null, email);
+            logger.info("Saving user: " + user);
+            user.setActive(false);
+            user = userRepository.save(user);
+        } catch (Throwable th) {
+            logger.error("Exception: ",th);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Service issues. User data cannot be saved", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    }
 
 	private void getDocumentList(User user) {
 		Map<String, String> requestObj = new HashMap<>();
