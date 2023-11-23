@@ -125,12 +125,32 @@ public class UserController implements IApiController {
 		}
 	}
 
+    /**
+     * type - ADMIN, USER etc..
+     * targetService - cmdb etc...
+     *      If targetService provided, API tries to push the newly created organization to the given service
+     *      using POST API of target service.
+     * organization - A name, if not found API tries to push it into the organization table and this will become
+     *      organization of user
+     * @param type
+     * @param organization
+     * @param username
+     * @param password
+     * @param email
+     * @param ownerId
+     * @param targetService
+     * @param file
+     * @param request
+     * @return
+     */
 	@RequestMapping(IConsts.API_CREATE)
 	public ResponseEntity<Object> create(@RequestParam(name = "type", required = false) String type,
                                          @RequestParam(name = "organization", required = false) String organization,
                                          @RequestParam("username") String username,
                                          @RequestParam("password") String password,
                                          @RequestParam(name = "email", required = false) String email,
+                                         @RequestParam(name = "ownerId", required = false) Long ownerId,
+                                         @RequestParam(name = "targetService", required = false) String targetService,
 			@RequestParam(name = "file", required = false) MultipartFile file, HttpServletRequest request) {
         // check if user already exists
         User user = this.userRepository.findByUsername(username);
@@ -147,29 +167,31 @@ public class UserController implements IApiController {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
 		}
 
-        // check if organization already present
+        user = new User();
+
         if (!StringUtils.isBlank(organization)) {
+            // check if organization already present
             Organization orgObj = new Organization();
             orgObj.setName(organization.toUpperCase());
             Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(orgObj));
-            if (oOrg.isPresent()) {
-                logger.error("Organization already exists");
-                Status st = setMessage(HttpStatus.valueOf(418).value(), "ERROR","Organization already exists", null);
-                return ResponseEntity.status(HttpStatus.valueOf(418)).body(st);
+            if (!oOrg.isPresent()) {
+                logger.info("Given organization not present. Organization: "+organization);
+                saveOrUpdateOrganization(organization, user, targetService);
+            }else{
+                user.setOrganization(oOrg.get());
             }
         }
 
-		user = new User();
 		try {
-
-            saveOrUpdateOrganization(organization, user);
 //			String signedInUser = IUtils.getUserFromRequest(request);
 //			user = IUtils.createEntity(service, signedInUser, User.class);
-			createUser(user, type, username, password, email);
 
+            createUser(user, type, username, password, email, ownerId);
             logger.info("Saving user: " + user);
 			user = userRepository.save(user);
-			addProfileImage(file, user);
+            if(file != null){
+                addProfileImage(file, user);
+            }
 			getDocumentList(user);
 		} catch (Throwable th) {
 			logger.error("Exception: ",th);
@@ -219,7 +241,7 @@ public class UserController implements IApiController {
             }
         }
         try {
-            createUser(user, "NEW_ORG_USER_REQUEST", null, null, email);
+            createUser(user, "NEW_ORG_USER_REQUEST", null, null, email, null);
             logger.info("Saving user: " + user);
             user.setActive(false);
             user = userRepository.save(user);
@@ -370,8 +392,8 @@ public class UserController implements IApiController {
 		return ResponseEntity.status(HttpStatus.OK).body(user);
 	}
 
-	private void saveOrUpdateOrganization(String orgName, User user) throws URISyntaxException {
-        logger.info("Saving new organization: " + orgName);
+	private void saveOrUpdateOrganization(String orgName, User user, String targetService) {
+        logger.info("Creating new organization: " + orgName);
 		if (!StringUtils.isBlank(orgName)) {
 			Organization organization = new Organization();
 			organization.setName(orgName.toUpperCase());
@@ -382,24 +404,39 @@ public class UserController implements IApiController {
 
             organization = this.organizationRepository.save(organization);
 
-            URI uri = new URI(cmdbOrgUrl);
-            Organization org = new Organization();
-            org.setName(organization.getName());
-            org.setSecurityServiceOrgId(organization.getId());
-            ResponseEntity<Organization> result = restTemplate.postForEntity(uri, org, Organization.class);
-            if(result != null && result.getBody() != null){
+            String url =  resoveTargetServiceUrl(targetService);
+            if(!StringUtils.isBlank(url)){
                 try{
-                    Organization cmdbOrg = result.getBody();
-                    organization.setCmdbOrgId(cmdbOrg.getId());
-                    organization = this.organizationRepository.save(organization);
-                    user.setOrganization(organization);
+                    URI uri = new URI(url);
+                    Organization org = new Organization();
+                    org.setName(organization.getName());
+                    org.setSecurityServiceOrgId(organization.getId());
+                    ResponseEntity<Organization> result = restTemplate.postForEntity(uri, org, Organization.class);
+                    if(result != null && result.getBody() != null){
+                        logger.info("Organization push to CMDB. Updating CMDB id security service organization for cross reference");
+                        Organization cmdbOrg = result.getBody();
+                        organization.setCmdbOrgId(cmdbOrg.getId());
+                        organization = this.organizationRepository.save(organization);
+                        user.setOrganization(organization);
+                    }
                 }catch (Exception e){
-                    logger.error("Organization could not be retrieved from dmdb: ",e);
+                    logger.error("Exception while pushing organization to CMDB. ",e);
                     user.setOrganization(organization);
                 }
             }
+
 		}
 	}
+
+    public String resoveTargetServiceUrl(String targetService){
+        String url = null;
+        if(!StringUtils.isBlank(targetService)){
+            if("CMDB".equalsIgnoreCase(targetService)){
+                return cmdbOrgUrl;
+            }
+        }
+        return url;
+    }
 
 	private void saveUpdateOrganization(ObjectNode  reqObje, User user, Date currentDate) throws URISyntaxException {
 		if (!StringUtils.isBlank(reqObje.get("organization").toString())) {
@@ -504,7 +541,7 @@ public class UserController implements IApiController {
 		return ResponseEntity.status(HttpStatus.OK).body(list);
 	}
 
-	private void createUser(User user, String type, String username, String password, String email) {
+	private void createUser(User user, String type, String username, String password, String email, Long ownerId) {
 		if (!StringUtils.isBlank(type)) {
 			user.setType(type);
 		}
@@ -525,8 +562,15 @@ public class UserController implements IApiController {
 		}
         user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
         user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
+        if(ownerId != null){
+            Optional<User> parent = this.userRepository.findById(ownerId);
+            if (parent.isPresent()) {
+                user.setOwner(parent.get());
+//            user.setOwnerId(reqObj.get("ownerId") != null ? reqObj.get("ownerId").asLong() : null);
+            }
+        }
 
-//		user.setOwnerId(reqObj.get("ownerId") != null ? reqObj.get("ownerId").asLong() : null);
+
 //		if (!StringUtils.isBlank(organization)) {
 //			Organization org = new Organization();
 //            org.setName(organization.toUpperCase());

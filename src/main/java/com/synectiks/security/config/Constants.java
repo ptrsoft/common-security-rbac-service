@@ -8,10 +8,12 @@ public final class Constants {
     public static final String SYSTEM_ACCOUNT = "system";
     public static final String ACTIVE = "ACTIVE";
     public static final String DEACTIVE = "DEACTIVE";
-    public static final String USER_TYPE_USER = "USER"; 
+    public static final String USER_TYPE_USER = "USER";
     public static final String USER_TYPE_ADMIN = "ADMIN";
+
+    public static final String USER_TYPE_ORG_USER = "ORG_USER";
     public static final String USER_TYPE_SUPER_ADMIN = "ROOT";
-    
+
     public static final String USER_INVITE_SENT = "INVITE_SENT";
     public static final String USER_INVITE_ACCEPTENCE_PENDING = "PENDING";
     public static final String USER_INVITE_CANCELED = "CANCELED";
@@ -24,8 +26,8 @@ public final class Constants {
     public static final String IDENTIFIER_PROFILE_IMAGE = "PROFILE_IMAGE";
     public static String HOST = null;
     public static String PORT = null;
-    
+
     private Constants() {
-    	
+
     }
 }
