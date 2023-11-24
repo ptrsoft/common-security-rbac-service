@@ -44,7 +44,7 @@ import java.util.*;
  * @author Rajesh
  */
 @RestController
-@RequestMapping(path = IApiController.PUB_API, method = RequestMethod.POST)
+@RequestMapping(path = IApiController.SEC_API+IApiController.PUB_API, method = RequestMethod.POST)
 @CrossOrigin
 public class SecurityController {
 
@@ -109,7 +109,7 @@ public class SecurityController {
 
 
 	@RequestMapping(value = "/signup")
-	public String login(@RequestBody LoginRequest request) throws IOException {
+	public String signup(@RequestBody LoginRequest request) throws IOException {
 		UsernamePasswordToken token = new UsernamePasswordToken();
 		token.setUsername(request.getUsername());
 		token.setPassword(request.getPassword().toCharArray());
@@ -122,7 +122,7 @@ public class SecurityController {
 	}
 
 	@RequestMapping(value = "/signin")
-	public ResponseEntity<Object> login(@RequestBody User user) throws IOException {
+	public ResponseEntity<Object> signin(@RequestBody User user) throws IOException {
 		UsernamePasswordToken token = new UsernamePasswordToken();
 		token.setUsername(user.getUsername());
 		token.setPassword(user.getPassword().toCharArray());

@@ -4,6 +4,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.synectiks.security.interfaces.IApiController;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -22,7 +23,7 @@ import com.synectiks.security.entities.Document;
 import com.synectiks.security.service.DocumentService;
 
 @RestController
-@RequestMapping("/api")
+@RequestMapping(IApiController.SEC_API)
 public class DocumentController {
 	private static final Logger logger = LoggerFactory.getLogger(DocumentController.class);
 
