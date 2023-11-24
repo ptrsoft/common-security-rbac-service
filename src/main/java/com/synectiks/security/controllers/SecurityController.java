@@ -44,7 +44,7 @@ import java.util.*;
  * @author Rajesh
  */
 @RestController
-@RequestMapping(path = IApiController.SEC_API+IApiController.PUB_API, method = RequestMethod.POST)
+@RequestMapping(path = IApiController.PUB_API, method = RequestMethod.POST)
 @CrossOrigin
 public class SecurityController {
 
