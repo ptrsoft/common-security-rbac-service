@@ -12,6 +12,8 @@ import javax.persistence.Table;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.domain.PSqlEntity;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 
 /**
  * @author Rajesh
@@ -29,12 +31,23 @@ public class Role extends PSqlEntity {
 	private boolean grp;
 	@Column(nullable = true)
 	private String description;
-	@ManyToMany(targetEntity = Permission.class, fetch = FetchType.EAGER)
-	private List<Permission> permissions;
+//	@ManyToMany(targetEntity = Permission.class, fetch = FetchType.EAGER)
+//	private List<Permission> permissions;
 	@ManyToMany(targetEntity = Role.class, fetch = FetchType.EAGER)
 	private Set<Role> roles;
 
-	public String getName() {
+    @ManyToMany(targetEntity = Policy.class, fetch = FetchType.LAZY)
+    private List<Policy> policies;
+
+    public List<Policy> getPolicies() {
+        return policies;
+    }
+
+    public void setPolicies(List<Policy> policies) {
+        this.policies = policies;
+    }
+
+    public String getName() {
 		return name;
 	}
 
@@ -58,13 +71,13 @@ public class Role extends PSqlEntity {
 		this.description = description;
 	}
 
-	public List<Permission> getPermissions() {
-		return permissions;
-	}
-
-	public void setPermissions(List<Permission> permissions) {
-		this.permissions = permissions;
-	}
+//	public List<Permission> getPermissions() {
+//		return permissions;
+//	}
+//
+//	public void setPermissions(List<Permission> permissions) {
+//		this.permissions = permissions;
+//	}
 
 	public Set<Role> getRoles() {
 		return roles;
@@ -91,7 +104,7 @@ public class Role extends PSqlEntity {
 		return "{" + (version != null ? "\"version\": \"" + version + "\", " : "")
 				+ (name != null ? "\"name\": \"" + name + "\", " : "")
 				+ (description != null ? "\"description\": \"" + description + "\", " : "")
-				+ (permissions != null ? "\"permissions\": " + permissions + ", " : "")
+//				+ (permissions != null ? "\"permissions\": " + permissions + ", " : "")
 				+ (roles != null ? "\"roles\": " + roles + ", " : "")
 				+ ((id!=null &&id > 0) ? "\"id\": " + id + ", " : "")
 				+ ("\"grp\": " + grp + ", ")

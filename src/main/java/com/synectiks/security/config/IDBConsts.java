@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.config;
 
@@ -13,6 +13,7 @@ public interface IDBConsts {
 	String Tbl_CUSTOMER = "Customers";
 	String Tbl_PERMISSION = "Permission";
 	String Tbl_ROLES = "Roles";
+    String Tbl_POLICY = "Policy";
 	String Tbl_SERVICE = "Service";
 	String Tbl_SSM = "SSMachine";
 	String Tbl_SSM_STATE = "SSMState";

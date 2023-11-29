@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.synectiks.security.entities.Policy;
 import org.apache.shiro.authc.AuthenticationInfo;
 
 import com.synectiks.security.entities.Permission;
@@ -222,18 +223,21 @@ public class AuthInfo implements Serializable {
 			if (r.isGrp()) {
 				fillRolePerms(rls, perms, r.getRoles(),mapPermission);
 			} else {
-				for (Permission p : r.getPermissions()) {
-					List<String> lst=new ArrayList<String>();
-					if(mapPermission.containsKey(p.getName())) {
-						lst.addAll(mapPermission.get(p.getName()));
-						lst.add(p.getPermission());
-						mapPermission.replace(p.getName(), lst);
-					}else {
-						lst.add(p.getPermission());
-						mapPermission.put(p.getName(), lst);
-					}
-					perms.add(p.getPermission());
-				}
+                for(Policy policy: r.getPolicies()){
+                    for (Permission p : policy.getPermissions()) {
+                        List<String> lst=new ArrayList<String>();
+                        if(mapPermission.containsKey(p.getName())) {
+                            lst.addAll(mapPermission.get(p.getName()));
+                            lst.add(p.getPermission());
+                            mapPermission.replace(p.getName(), lst);
+                        }else {
+                            lst.add(p.getPermission());
+                            mapPermission.put(p.getName(), lst);
+                        }
+                        perms.add(p.getPermission());
+                    }
+                }
+
 
 			}
 		}

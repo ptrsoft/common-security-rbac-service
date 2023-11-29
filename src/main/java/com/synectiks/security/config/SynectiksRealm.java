@@ -6,6 +6,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Set;
 
+import com.synectiks.security.entities.Policy;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -67,11 +68,18 @@ public class SynectiksRealm extends JdbcRealm {
 				if (!IUtils.isNull(user) && user.isActive()) {
 					for (Role role : user.getRoles()) {
 						roleNames.add(role.getName());
-						if (!IUtils.isNull(role.getPermissions())) {
-							for (Permission permisn : role.getPermissions()) {
-								permissions.add(permisn.getPermission());
-							}
-						}
+//						if (!IUtils.isNull(role.getPermissions())) {
+//							for (Permission permisn : role.getPermissions()) {
+//								permissions.add(permisn.getPermission());
+//							}
+//						}
+                        if (!IUtils.isNull(role.getPolicies())) {
+                            for (Policy policy : role.getPolicies()) {
+                                for (Permission permisn : policy.getPermissions()) {
+                                    permissions.add(permisn.getPermission());
+                                }
+                            }
+                        }
 					}
 				}
 			} catch (Exception e) {
@@ -106,12 +114,20 @@ public class SynectiksRealm extends JdbcRealm {
 		User user = userRepository.findByUsername(username);
 		if (!IUtils.isNull(user) && user.isActive()) {
 			for (Role role : user.getRoles()) {
-				if ((!IUtils.isNull(roleNames) && roleNames.contains(role.getName()))
-						&& !IUtils.isNull(role.getPermissions())) {
-					for (Permission permisn : role.getPermissions()) {
-						permisns.add(permisn.getPermission());
-					}
-				}
+//				if ((!IUtils.isNull(roleNames) && roleNames.contains(role.getName()))
+//						&& !IUtils.isNull(role.getPermissions())) {
+//					for (Permission permisn : role.getPermissions()) {
+//						permisns.add(permisn.getPermission());
+//					}
+//				}
+                if ((!IUtils.isNull(roleNames) && roleNames.contains(role.getName()))
+                    && !IUtils.isNull(role.getPolicies()) ) {
+                    for(Policy policy: role.getPolicies()){
+                        for (Permission permisn : policy.getPermissions()) {
+                            permisns.add(permisn.getPermission());
+                        }
+                    }
+                }
 			}
 		}
 
