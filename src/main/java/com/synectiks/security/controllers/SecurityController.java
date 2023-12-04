@@ -3,9 +3,12 @@
  */
 package com.synectiks.security.controllers;
 
+import com.amazonaws.services.simpleemail.model.SendEmailResult;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.Constants;
+import com.synectiks.security.email.AwsEmailService;
 import com.synectiks.security.entities.Document;
+import com.synectiks.security.entities.Status;
 import com.synectiks.security.entities.User;
 import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.mfa.GoogleMultiFactorAuthenticationService;
@@ -15,6 +18,7 @@ import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.UserRepository;
 import com.synectiks.security.service.DocumentService;
 import com.synectiks.security.util.IUtils;
+import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
@@ -36,6 +40,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
@@ -66,6 +71,9 @@ public class SecurityController {
 
     @Autowired
     private DefaultWebSecurityManager defaultWebSecurityManager;
+
+    @Autowired
+    private AwsEmailService awsEmailService;
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
 	public ResponseEntity<Object> login(@RequestParam  String username, @RequestParam String password,
@@ -152,7 +160,7 @@ public class SecurityController {
             subject.getSession().setAttribute(token.getUsername(), session.getId());
 
             User usr = userRepository.findByUsername(token.getUsername());
-
+            User updateUser = (User)BeanUtils.cloneBean(usr);
             if(StringUtils.isBlank(usr.getIsMfaEnable())) {
             	usr.setIsMfaEnable(Constants.NO);
             }
@@ -162,6 +170,10 @@ public class SecurityController {
             res = IUtils.getStringFromValue(authInfo);
             logger.info(res);
             //if no exception, that's it, we're done!
+            logger.debug("Updating users login date-time");
+            updateUser.setLastLoginAt(new Date());
+            updateUser.setLoginCount(updateUser.getLoginCount() == null ? 1 : updateUser.getLoginCount()+1);
+            userRepository.save(updateUser);
         } catch (UnknownAccountException th) {
             //username wasn't in the system, show them an error message?
 			logger.error(th.getMessage(), th);
@@ -178,7 +190,11 @@ public class SecurityController {
         	// General exception thrown due to an error during the Authentication process
 			logger.error(th.getMessage(), th);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
+        } catch (InvocationTargetException|IllegalAccessException|InstantiationException|NoSuchMethodException th) {
+            logger.error(th.getMessage(), th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
         }
+
         return ResponseEntity.status(HttpStatus.OK).body(authInfo);
     }
 
@@ -318,6 +334,20 @@ public class SecurityController {
         Status st = new Status(600, "Session not found", false);
         return ResponseEntity.status(HttpStatus.OK).body(st);
 
+    }
+
+    @RequestMapping(path = "/forgot-password", method = RequestMethod.GET)
+    public ResponseEntity<Object> sendForgotPasswordMail(@RequestParam String userName) {
+        logger.info("Request to send forgot password mail");
+        User user = this.userRepository.findByUsername(userName);
+        if (user == null) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("User not found");
+        }
+        if (StringUtils.isBlank(user.getEmail())) {
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("User's email not found. User Name :"+userName);
+        }
+        SendEmailResult status = awsEmailService.sendForgotPasswordMail(userName, user.getEmail());
+        return ResponseEntity.status(HttpStatus.OK).body("Mail sent");
     }
 
     private class Status{

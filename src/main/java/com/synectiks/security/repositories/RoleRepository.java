@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.repositories;
 
@@ -8,6 +8,8 @@ import org.springframework.stereotype.Repository;
 
 import com.synectiks.security.entities.Role;
 
+import java.util.List;
+
 /**
  * @author Rajesh
  */
@@ -15,5 +17,5 @@ import com.synectiks.security.entities.Role;
 public interface RoleRepository extends JpaRepository<Role, Long>{// CrudRepository<Role, String> {
 
 	public String findIdByName(String name);
-
+    List<Role> findByCreatedByAndGrp(String createdBy, boolean grp);
 }

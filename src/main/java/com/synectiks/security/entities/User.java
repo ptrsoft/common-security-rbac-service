@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.entities;
 
@@ -32,7 +32,7 @@ import com.synectiks.security.domain.PSqlEntity;
 public class User extends PSqlEntity {
 
 	/**
-	 * 
+	 *
 	 */
 	private static final long serialVersionUID = 1L;
 	public static User ADMIN = create(IConsts.ADMIN, Arrays.asList(Role.ROLE_ADMIN));
@@ -50,62 +50,72 @@ public class User extends PSqlEntity {
 	private String email;
 	@ManyToMany(targetEntity = Role.class, fetch = FetchType.EAGER)
 	private List<Role> roles;
-	
+
 	@OneToOne(targetEntity = Organization.class, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "organizations", allowSetters = true)
     private Organization organization;
 
 	@OneToOne(cascade=CascadeType.ALL)
     private User owner;
-	
+
 	@Column(nullable = true)
 	private String googleMfaKey;
-	
+
 	@Column(nullable = true)
 	private String isMfaEnable;
-	
+
 	@Column(nullable = true)
 	private String mfaQrImageFilePath;
-	
+
 	@Column(nullable = true)
 	private String inviteStatus;
-	
+
 	@Column(length = 1000, nullable = true)
 	private String inviteLink;
-	
+
 	@Column(nullable = true)
 	private String inviteCode;
-	
+
 	@Column(nullable = true)
 	private Date inviteSentOn;
-	
+
 	@Column(nullable = true)
 	private String tempPassword;
-	
+
+    @Column(nullable = true)
+    private String encPassword;
+
+    @Column(nullable = true)
+    private Integer loginCount;
+
+
+    @Column(nullable = true)
+    private Date lastLoginAt;
+
     @Transient
     @JsonProperty
 	private byte[] mfaQrCode;
-	
+
     @Transient
     @JsonProperty
 	private List<User> pendingInviteList;
-	
+
     @Transient
     @JsonProperty
 	private List<User> teamList;
-    
+
     @Transient
 	@JsonProperty
 	private List<Document> documentList;
-    
+
     @Transient
 	@JsonProperty
 	private byte[] profileImage;
-    
+
     @Transient
     @JsonProperty
 	private boolean isAuthenticatedByUserName = false;
-    
+
 	public User() {
 		super();
 	}
@@ -192,7 +202,7 @@ public class User extends PSqlEntity {
 		this.organization = organization;
 	}
 
-	
+
 	public String getGoogleMfaKey() {
 		return googleMfaKey;
 	}
@@ -313,7 +323,29 @@ public class User extends PSqlEntity {
 		this.documentList = documentList;
 	}
 
+    public String getEncPassword() {
+        return encPassword;
+    }
 
-	
-	
+    public void setEncPassword(String encPassword) {
+        this.encPassword = encPassword;
+    }
+
+    public Integer getLoginCount() {
+        return loginCount;
+    }
+
+    public void setLoginCount(Integer loginCount) {
+        this.loginCount = loginCount;
+    }
+
+    public Date getLastLoginAt() {
+        return lastLoginAt;
+    }
+
+    public void setLastLoginAt(Date lastLoginAt) {
+        this.lastLoginAt = lastLoginAt;
+    }
+
+
 }

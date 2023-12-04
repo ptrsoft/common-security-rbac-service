@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.config;
 
@@ -8,14 +8,14 @@ package com.synectiks.security.config;
  */
 public interface IConsts {
 
-	
+
 
 	int SEC_IN_MILLIS = 1000;
 	int MIN_IN_MILLIS = 60 * SEC_IN_MILLIS;
-	
-	
 
-	
+
+
+
 	/** 30 Sec Timeout for elastic search scroll query */
 
 	String DELIM_COMMA = ",";
@@ -23,7 +23,7 @@ public interface IConsts {
 	String ADMIN = "ADMIN";
 	String CAUSE = "Cause";
 	String FAILED = "Failed";
-	
+
 	String SPACE = " ";
 	String STATUS = "Status";
 
@@ -32,25 +32,25 @@ public interface IConsts {
 	String INDX_SERVICE = "indx_services";
 	String INDX_SOURCE = "indx_source";
 	String INDX_SUBSCRIBE = "indx_subscribe";
-	
+
 
 	String INDX_TYPE_SERVICE = "indx_type_service";
 	String INDX_TYPE_SOURCE = "indx_type_source";
 	String INDX_TYPE_SUBSCRIBE = "indx_type_subscribe";
-	
 
-	
+
+
 	String DEF_ENCODING = "UTF-8";
 	String JSON_DATE_FORMAT = "EEE MMM dd HH:mm:ss zzz yyyy";
 	String DEF_DATE_FORMAT = "yyyy-MM-dd HH:mm:ss";
-	
-	
 
-	
 
-	
-	
-	
+
+
+
+
+
+
 
 	String CONT_TYPE = "Content-Type";
 	String CONT_TYPE_JSON = "application/json";
@@ -62,19 +62,20 @@ public interface IConsts {
 	String API_FIND_ALL = "/listAll";
 	String API_FIND_ID = "/{id}";
 
-	
-	
-	
-	
-	
+    String API_FIND_BY_OWNER = "/find-by-owner";
+
+
+
+
+
 
 	String PRM_QUERY = "query";
 
 
-	
-	
+
+
 	//String URL_INDX_EVENT_FIRE = "http://localhost:8081/api/v1/auth/seach/fireEvent";
-	
+
 
 	String NESTED = "nested";
 	String PATH = "path";

@@ -216,6 +216,7 @@ public class AuthInfo implements Serializable {
 		return null;
 	}
 
+    //TODO: make changes after making policy and permissions changes
 	public static void fillRolePerms(List<String> rls, List<String> perms,
 			Collection<Role> roles,Map<String,List<String>> mapPermission) {
 		for (Role r : roles) {
@@ -223,20 +224,20 @@ public class AuthInfo implements Serializable {
 			if (r.isGrp()) {
 				fillRolePerms(rls, perms, r.getRoles(),mapPermission);
 			} else {
-                for(Policy policy: r.getPolicies()){
-                    for (Permission p : policy.getPermissions()) {
-                        List<String> lst=new ArrayList<String>();
-                        if(mapPermission.containsKey(p.getName())) {
-                            lst.addAll(mapPermission.get(p.getName()));
-                            lst.add(p.getPermission());
-                            mapPermission.replace(p.getName(), lst);
-                        }else {
-                            lst.add(p.getPermission());
-                            mapPermission.put(p.getName(), lst);
-                        }
-                        perms.add(p.getPermission());
-                    }
-                }
+//                for(Policy policy: r.getPolicies()){
+//                    for (Permission p : policy.getPermissions()) {
+//                        List<String> lst=new ArrayList<String>();
+//                        if(mapPermission.containsKey(p.getName())) {
+//                            lst.addAll(mapPermission.get(p.getName()));
+//                            lst.add(p.getName());
+//                            mapPermission.replace(p.getName(), lst);
+//                        }else {
+//                            lst.add(p.getName());
+//                            mapPermission.put(p.getName(), lst);
+//                        }
+//                        perms.add(p.getName());
+//                    }
+//                }
 
 
 			}

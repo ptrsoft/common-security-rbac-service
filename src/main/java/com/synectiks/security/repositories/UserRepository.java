@@ -1,8 +1,9 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.repositories;
 
+import java.util.List;
 import java.util.Optional;
 
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -18,5 +19,7 @@ public interface UserRepository extends JpaRepository<User, Long>{//,	IUserRepos
 
 	Optional<User> findById(long id);
 	User findByUsername(String username);
-	
+
+    List<User> findByOwnerId(long id);
+
 }

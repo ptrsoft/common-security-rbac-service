@@ -7,9 +7,12 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.entities.Policy;
+import com.synectiks.security.entities.PolicyAssignedPermissions;
 import com.synectiks.security.interfaces.IApiController;
+import com.synectiks.security.repositories.PolicyAssignedPermissionsRepository;
 import com.synectiks.security.repositories.PolicyRepository;
 import com.synectiks.security.util.IUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +36,9 @@ public class PolicyController implements IApiController {
 	@Autowired
 	private PolicyRepository repository;
 
+    @Autowired
+    private PolicyAssignedPermissionsRepository policyAssignedPermissionsRepository;
+
 	@Override
 	@RequestMapping(path = IConsts.API_FIND_ALL, method = RequestMethod.GET)
 	public ResponseEntity<Object> findAll(HttpServletRequest request) {
@@ -55,7 +61,23 @@ public class PolicyController implements IApiController {
 			String user = IUtils.getUserFromRequest(request);
 			entity = IUtils.createEntity(service, user, Policy.class);
 			logger.info("Policy: " + entity);
-			entity = repository.save(entity);
+            // get assigned permission array in a variable
+            List<PolicyAssignedPermissions> assignedPermissions = entity.getPermissions();
+            // set assigned permission array null in policy
+            entity.setPermissions(null);
+            // save policy
+            entity = repository.save(entity);
+            // iterate assigned permission array and set policy in each object and save
+            for(PolicyAssignedPermissions policyAssignedPermissions : assignedPermissions){
+                policyAssignedPermissions.setPolicyId(entity.getId());
+                policyAssignedPermissions = policyAssignedPermissionsRepository.save(policyAssignedPermissions);
+            }
+            // keep saved assigned permission references in an array
+            // assign this array in policy
+            entity.setPermissions(assignedPermissions);
+            // update policy
+            entity = repository.save(entity);
+
 		} catch (Throwable th) {
 //			th.printStackTrace();
 			logger.error(th.getMessage(), th);
@@ -94,15 +116,29 @@ public class PolicyController implements IApiController {
 	public ResponseEntity<Object> update(@RequestBody ObjectNode entity,
 			HttpServletRequest request) {
         Policy service = null;
+        Policy existingPolicy = null;
 		try {
 			String user = IUtils.getUserFromRequest(request);
 			service = IUtils.createEntity(entity, user, Policy.class);
-			repository.save(service);
+            existingPolicy = repository.findById(service.getId()).orElse(null);
+            if(existingPolicy == null){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("policy not found. policy id: "+service.getId());
+            }
+            if(!StringUtils.isBlank(service.getName())){
+                existingPolicy.setName(service.getName());
+            }
+            if(!StringUtils.isBlank(service.getDescription())){
+                existingPolicy.setDescription(service.getDescription());
+            }
+            if(!StringUtils.isBlank(service.getStatus())){
+                existingPolicy.setStatus(service.getStatus());
+            }
+			repository.save(existingPolicy);
 		} catch (Throwable th) {
 			logger.error(th.getMessage(), th);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(th);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(th.getStackTrace());
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(service);
+		return ResponseEntity.status(HttpStatus.OK).body(existingPolicy);
 	}
 
 	@Override

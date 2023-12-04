@@ -2,6 +2,7 @@ package com.synectiks.security.entities;
 
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.domain.PSqlEntity;
+import org.hibernate.annotations.ColumnDefault;
 
 import javax.persistence.*;
 import java.util.List;
@@ -10,10 +11,10 @@ import java.util.List;
  * @author Manoj
  */
 @Entity
-@Table(name = IDBConsts.Tbl_POLICY)
-public class Policy extends PSqlEntity {
+@Table(name = IDBConsts.Tbl_PERMISSION_CATEGORY)
+public class PermissionCategory extends PSqlEntity {
 
-	private static final long serialVersionUID = 2619620405443093727L;
+	private static final long serialVersionUID = 2619620405443093733L;
 
     private String name;
 
@@ -24,13 +25,21 @@ public class Policy extends PSqlEntity {
     private Long version;
 
     @Column(nullable = true)
+//    @ColumnDefault(value = "ACTIVE")
     private String status;
 
-    @ManyToMany(targetEntity = PolicyAssignedPermissions.class, fetch = FetchType.LAZY)
-    private List<PolicyAssignedPermissions> permissions;
+    public String getStatus() {
+        return status;
+    }
 
+    public void setStatus(String status) {
+        this.status = status;
+    }
 
-    public String getName() {
+    @ManyToMany(targetEntity = Permission.class, fetch = FetchType.LAZY)
+	private List<Permission> permissions;
+
+	public String getName() {
 		return name;
 	}
 
@@ -54,23 +63,15 @@ public class Policy extends PSqlEntity {
 		this.description = description;
 	}
 
-	public List<PolicyAssignedPermissions> getPermissions() {
+	public List<Permission> getPermissions() {
 		return permissions;
 	}
 
-	public void setPermissions(List<PolicyAssignedPermissions> permissions) {
+	public void setPermissions(List<Permission> permissions) {
 		this.permissions = permissions;
 	}
 
-    public String getStatus() {
-        return status;
-    }
-
-    public void setStatus(String status) {
-        this.status = status;
-    }
-
-    @Override
+	@Override
 	public String toString() {
 		return "{" + (version != null ? "\"version\": \"" + version + "\", " : "")
 				+ (name != null ? "\"name\": \"" + name + "\", " : "")

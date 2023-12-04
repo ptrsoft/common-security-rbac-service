@@ -3,10 +3,12 @@
  */
 package com.synectiks.security.controllers;
 
+import com.amazonaws.services.simpleemail.model.SendEmailResult;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.Constants;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
+import com.synectiks.security.email.AwsEmailService;
 import com.synectiks.security.email.MailService;
 import com.synectiks.security.entities.*;
 import com.synectiks.security.interfaces.IApiController;
@@ -15,10 +17,7 @@ import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.RoleRepository;
 import com.synectiks.security.repositories.UserRepository;
 import com.synectiks.security.service.DocumentService;
-import com.synectiks.security.util.IUtils;
-import com.synectiks.security.util.RandomGenerator;
-import com.synectiks.security.util.TemplateReader;
-import com.synectiks.security.util.Token;
+import com.synectiks.security.util.*;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
@@ -62,7 +61,7 @@ public class UserController implements IApiController {
 
 	@Value("${synectiks.cmdb.organization.url}")
 	private String cmdbOrgUrl;
-	private DefaultPasswordService pswdService = new DefaultPasswordService();
+	private DefaultPasswordService shiroPasswordService = new DefaultPasswordService();
 
 	@Autowired
 	private UserRepository userRepository;
@@ -88,6 +87,9 @@ public class UserController implements IApiController {
 	@Autowired
 	private DocumentService documentService;
 
+    @Autowired
+    private AwsEmailService awsEmailService;
+
 	@Override
 	@RequestMapping(path = IConsts.API_FIND_ALL, method = RequestMethod.GET)
 	// @RequiresRoles("ROLE_" + IConsts.ADMIN)
@@ -106,6 +108,23 @@ public class UserController implements IApiController {
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(entities);
 	}
+
+    @RequestMapping(path = IConsts.API_FIND_BY_OWNER, method = RequestMethod.GET)
+    public ResponseEntity<Object> findByOwnerId(@RequestParam(name = "ownerId", required = true) Long ownerId,
+                                                HttpServletRequest request) {
+        List<User> entities = null;
+        try {
+            entities = userRepository.findByOwnerId(ownerId);
+            for (User by : entities) {
+                getDocumentList(by);
+                setProfileImage(by);
+            }
+        } catch (Throwable th) {
+            logger.error(th.getMessage(), th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th.getStackTrace());
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(entities);
+    }
 
 	private void setProfileImage(User by) throws IOException {
 		Map<String, String> requestObj = new HashMap<>();
@@ -147,7 +166,7 @@ public class UserController implements IApiController {
 	public ResponseEntity<Object> create(@RequestParam(name = "type", required = false) String type,
                                          @RequestParam(name = "organization", required = false) String organization,
                                          @RequestParam("username") String username,
-                                         @RequestParam("password") String password,
+                                         @RequestParam(name = "password", required = false) String password,
                                          @RequestParam(name = "email", required = false) String email,
                                          @RequestParam(name = "ownerId", required = false) Long ownerId,
                                          @RequestParam(name = "targetService", required = false) String targetService,
@@ -181,11 +200,7 @@ public class UserController implements IApiController {
                 user.setOrganization(oOrg.get());
             }
         }
-
 		try {
-//			String signedInUser = IUtils.getUserFromRequest(request);
-//			user = IUtils.createEntity(service, signedInUser, User.class);
-
             createUser(user, type, username, password, email, ownerId);
             logger.info("Saving user: " + user);
 			user = userRepository.save(user);
@@ -193,6 +208,8 @@ public class UserController implements IApiController {
                 addProfileImage(file, user);
             }
 			getDocumentList(user);
+            //send mail
+            SendEmailResult status = awsEmailService.sendNewUserMail(user);
 		} catch (Throwable th) {
 			logger.error("Exception: ",th);
             Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Service issues. User data cannot be saved", null);
@@ -369,7 +386,7 @@ public class UserController implements IApiController {
 
 			if (!StringUtils.isBlank(reqObje.get("password").asText())) {
 				// Encrypt the password
-				user.setPassword(pswdService.encryptPassword(reqObje.get("password").asText()));
+				user.setPassword(shiroPasswordService.encryptPassword(reqObje.get("password").asText()));
 			}
 
 			Date currentDate = new Date();
@@ -423,6 +440,8 @@ public class UserController implements IApiController {
                     logger.error("Exception while pushing organization to CMDB. ",e);
                     user.setOrganization(organization);
                 }
+            }else{
+                user.setOrganization(organization);
             }
 
 		}
@@ -549,8 +568,15 @@ public class UserController implements IApiController {
 			user.setUsername(username);
 		}
         if (!IUtils.isNullOrEmpty(password) && !password.startsWith("$shiro1$")) {
-            user.setPassword(pswdService.encryptPassword(password));
+            user.setPassword(shiroPasswordService.encryptPassword(password));
+            user.setEncPassword((EncryptionDecription.encrypt(password)));
+        }else{
+            //set default password
+            String tempPwd = RandomGenerator.getTemporaryPassword();
+            user.setPassword(shiroPasswordService.encryptPassword(tempPwd));
+            user.setEncPassword(EncryptionDecription.encrypt(tempPwd));
         }
+
         Date currentDate = new Date();
         user.setCreatedAt(currentDate);
         user.setUpdatedAt(currentDate);
@@ -560,14 +586,17 @@ public class UserController implements IApiController {
 		if (!StringUtils.isBlank(email)) {
 			user.setEmail(email);
 		}
-        user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
-        user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
         if(ownerId != null){
             Optional<User> parent = this.userRepository.findById(ownerId);
             if (parent.isPresent()) {
                 user.setOwner(parent.get());
+                user.setCreatedBy(parent.get().getUsername());
+                user.setUpdatedBy(parent.get().getUsername());
 //            user.setOwnerId(reqObj.get("ownerId") != null ? reqObj.get("ownerId").asLong() : null);
             }
+        }else{
+            user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
+            user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
         }
 
 
@@ -777,7 +806,7 @@ public class UserController implements IApiController {
 			invitee.setActive(true);
 			invitee.setUpdatedAt(currentDate);
 			invitee.setUpdatedBy(invitee.getUsername());
-			invitee.setPassword(pswdService.encryptPassword(invitee.getTempPassword()));
+			invitee.setPassword(shiroPasswordService.encryptPassword(invitee.getTempPassword()));
 			invitee = userRepository.save(invitee);
 			logger.info("User invite accepted and saved in db");
 
@@ -1090,7 +1119,7 @@ public class UserController implements IApiController {
 //        }
 
         String newPassword = reqObje.get("newPassword").asText();
-        user.setPassword(pswdService.encryptPassword(newPassword));
+        user.setPassword(shiroPasswordService.encryptPassword(newPassword));
         userRepository.save(user);
         Token.remove(userName);
         Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Password changed successfully: ", null);

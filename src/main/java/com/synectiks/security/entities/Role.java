@@ -12,6 +12,7 @@ import javax.persistence.Table;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.domain.PSqlEntity;
+import org.hibernate.annotations.ColumnDefault;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 
@@ -29,7 +30,19 @@ public class Role extends PSqlEntity {
 	@Column(nullable = true)
 	private Long version;
 	private boolean grp;
-	@Column(nullable = true)
+
+    @ColumnDefault(value = "false")
+    private boolean isDefault;
+
+    public boolean isDefault() {
+        return isDefault;
+    }
+
+    public void setDefault(boolean aDefault) {
+        isDefault = aDefault;
+    }
+
+    @Column(nullable = true)
 	private String description;
 //	@ManyToMany(targetEntity = Permission.class, fetch = FetchType.EAGER)
 //	private List<Permission> permissions;
@@ -108,6 +121,7 @@ public class Role extends PSqlEntity {
 				+ (roles != null ? "\"roles\": " + roles + ", " : "")
 				+ ((id!=null &&id > 0) ? "\"id\": " + id + ", " : "")
 				+ ("\"grp\": " + grp + ", ")
+                + ("\"isDefault\": " + isDefault + ", ")
 				+ (createdAt != null ? "\"createdAt\": \"" + createdAt + "\", " : "")
 				+ (updatedAt != null ? "\"updatedAt\": \"" + updatedAt + "\", " : "")
 				+ (createdBy != null ? "\"createdBy\": \"" + createdBy + "\", " : "")

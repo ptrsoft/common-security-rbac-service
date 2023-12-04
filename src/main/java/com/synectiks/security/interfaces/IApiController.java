@@ -41,6 +41,7 @@ public interface IApiController {
 	String URL_RECOM = "/recom";
 	String URL_ROLES = "/roles";
     String URL_POLICY = "/policy";
+    String URL_PERMISSION_CATEGORY = "/permission-category";
 	String URL_RESOURCE = "/resource";
 	String URL_SEARCH = "/search";
 	String URL_SERVICE = "/service";

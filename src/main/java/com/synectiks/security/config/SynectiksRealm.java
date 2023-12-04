@@ -73,13 +73,14 @@ public class SynectiksRealm extends JdbcRealm {
 //								permissions.add(permisn.getPermission());
 //							}
 //						}
-                        if (!IUtils.isNull(role.getPolicies())) {
-                            for (Policy policy : role.getPolicies()) {
-                                for (Permission permisn : policy.getPermissions()) {
-                                    permissions.add(permisn.getPermission());
-                                }
-                            }
-                        }
+                        //TODO: make changes after making policy and permissions changes
+//                        if (!IUtils.isNull(role.getPolicies())) {
+//                            for (Policy policy : role.getPolicies()) {
+//                                for (Permission permisn : policy.getPermissions()) {
+//                                    permissions.add(permisn.getName());
+//                                }
+//                            }
+//                        }
 					}
 				}
 			} catch (Exception e) {
@@ -120,14 +121,15 @@ public class SynectiksRealm extends JdbcRealm {
 //						permisns.add(permisn.getPermission());
 //					}
 //				}
-                if ((!IUtils.isNull(roleNames) && roleNames.contains(role.getName()))
-                    && !IUtils.isNull(role.getPolicies()) ) {
-                    for(Policy policy: role.getPolicies()){
-                        for (Permission permisn : policy.getPermissions()) {
-                            permisns.add(permisn.getPermission());
-                        }
-                    }
-                }
+                //TODO: make changes after making policy and permissions changes
+//                if ((!IUtils.isNull(roleNames) && roleNames.contains(role.getName()))
+//                    && !IUtils.isNull(role.getPolicies()) ) {
+//                    for(Policy policy: role.getPolicies()){
+//                        for (Permission permisn : policy.getPermissions()) {
+//                            permisns.add(permisn.getName());
+//                        }
+//                    }
+//                }
 			}
 		}
 

@@ -60,11 +60,11 @@ class PermissionControllerTest {
 		permission1 = new Permission();
 		permission1.setId("101");
 		permission1.setName("Edtior Permission");
-		permission1.setPermission("Editor_permission");
+//		permission1.setPermission("Editor_permission");
 		permission2=new Permission();
 		permission2.setId("102");
 		permission2.setName("Manager Permission");
-		permission2.setPermission("Manager_permission");
+//		permission2.setPermission("Manager_permission");
 		mapper = new ObjectMapper();
 	}
 

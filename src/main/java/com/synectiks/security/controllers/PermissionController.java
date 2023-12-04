@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.controllers;
 
@@ -139,9 +139,9 @@ public class PermissionController implements IApiController {
 
 					Permission permissionObj = new Permission();
 					permissionObj.setName(parent);
-					String permission = jsonNode.get("permission").asText();
+//					String permission = jsonNode.get("permission").asText();
 					String description = jsonNode.get("description").asText();
-					permissionObj.setPermission(permission);
+//					permissionObj.setPermission(permission);
 					permissionObj.setDescription(description);
 					System.out.println("Permision object going to persist:::" + permissionObj);
 					repository.save(permissionObj);
@@ -184,5 +184,5 @@ public class PermissionController implements IApiController {
 		return null;
 	}
 
-	
+
 }

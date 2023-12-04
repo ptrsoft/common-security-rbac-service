@@ -1,5 +1,5 @@
 /**
- * 
+ *
  */
 package com.synectiks.security.controllers;
 
@@ -12,12 +12,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.IConsts;
@@ -55,6 +50,20 @@ public class RoleController implements IApiController {
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(entities);
 	}
+
+    @RequestMapping(path = IConsts.API_FIND_BY_OWNER, method = RequestMethod.GET)
+    public ResponseEntity<Object> findByOwnerAndGroup(@RequestParam(name = "createdBy", required = true) String createdBy,
+                                                      @RequestParam(name = "isGroup", required = true) boolean isGroup,
+                                                      HttpServletRequest request) {
+        List<Role> entities = null;
+        try {
+            entities = (List<Role>) repository.findByCreatedByAndGrp(createdBy, isGroup);
+        } catch (Throwable th) {
+            logger.error(th.getMessage(), th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th.getStackTrace());
+        }
+        return ResponseEntity.status(HttpStatus.CREATED).body(entities);
+    }
 
 	@Override
 	@RequestMapping(IConsts.API_CREATE)
@@ -126,5 +135,5 @@ public class RoleController implements IApiController {
 				.body("Not a valid entity");
 	}
 
-	
+
 }

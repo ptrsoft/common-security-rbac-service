@@ -34,8 +34,8 @@ public class EmailController {
     @Autowired
     private AwsEmailService awsEmailService;
 
-    @Autowired
-    private UserRepository userRepository;
+//    @Autowired
+//    private UserRepository userRepository;
 
     @RequestMapping("/sendMail")
 	public String sendMail() {
@@ -66,21 +66,21 @@ public class EmailController {
         return ResponseEntity.status(HttpStatus.OK).body("Email sent");
     }
 
-    @RequestMapping(path = "/forgot-password", method = RequestMethod.GET)
-    public ResponseEntity<Object> sendForgotPasswordMail(@RequestParam String userName) {
-        User user = this.userRepository.findByUsername(userName);
-        if (user == null) {
-            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found. User Name :"+userName, null);
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-        }
-        if (StringUtils.isBlank(user.getEmail())) {
-            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User's email not found. User Name :"+userName, null);
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-        }
-        SendEmailResult status = awsEmailService.sendForgotPasswordMail(userName, user.getEmail());
-        Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Mail sent", status);
-        return ResponseEntity.status(HttpStatus.OK).body(st);
-    }
+//    @RequestMapping(path = "/forgot-password", method = RequestMethod.GET)
+//    public ResponseEntity<Object> sendForgotPasswordMail(@RequestParam String userName) {
+//        User user = this.userRepository.findByUsername(userName);
+//        if (user == null) {
+//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found. User Name :"+userName, null);
+//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//        }
+//        if (StringUtils.isBlank(user.getEmail())) {
+//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User's email not found. User Name :"+userName, null);
+//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//        }
+//        SendEmailResult status = awsEmailService.sendForgotPasswordMail(userName, user.getEmail());
+//        Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Mail sent", status);
+//        return ResponseEntity.status(HttpStatus.OK).body(st);
+//    }
 
 
     private Status setMessage(int stqtusCode, String stausType, String msg, Object obj){

@@ -19,7 +19,7 @@ public class Permission extends PSqlEntity {
 	@Column(nullable = true)
     private Long version;
     private String name;
-    private String permission;
+//    private String permission;
     @Column(nullable = true)
     private String description;
 
@@ -39,13 +39,13 @@ public class Permission extends PSqlEntity {
         this.name = name;
     }
 
-    public String getPermission() {
-        return permission;
-    }
-
-    public void setPermission(String permis) {
-        this.permission = permis;
-    }
+//    public String getPermission() {
+//        return permission;
+//    }
+//
+//    public void setPermission(String permis) {
+//        this.permission = permis;
+//    }
 
     public String getDescription() {
         return description;
