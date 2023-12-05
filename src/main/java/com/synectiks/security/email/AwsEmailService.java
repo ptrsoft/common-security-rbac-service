@@ -80,19 +80,19 @@ public class AwsEmailService {
         AmazonSimpleEmailService client = getAwsEmailClient();
         String ownerName = user.getOwner() != null ? user.getOwner().getUsername() : "AppKube";
         String subject = "Your AppKube Account Information";
-        String msg = "Dear "+user.getUsername()+",\n" +
-            "Welcome to AppKube. We're delighted to have you on board.\n" +
-            "As part of the onboarding process, we are providing you with your login credentials to access AppKube services. Please keep this information secure and do not share it with anyone.\n" +
-            "\n" +
-            "Your login details are as follows:\n" +
-            "Login ID: "+user.getUsername()+"\n" +
-            "Password: "+EncryptionDecription.decrypt(user.getEncPassword())+"\n" +
-            "\n" +
-            "You can use the below link to login\n" +
-            "\n" +
-            "https://appkube.synectiks.net\n" +
-            "\n" +
-            "Best regards,\n" +ownerName;
+        String msg = "Dear <h3>"+user.getUsername()+"</h3>,<br>" +
+            "Welcome to AppKube. We're delighted to have you on board.<br>" +
+            "As part of the onboarding process, we are providing you with your login credentials to access AppKube services. Please keep this information secure and do not share it with anyone.<br>" +
+            "<br>" +
+            "Your login details are as follows:<br>" +
+            "Login ID: <h3>"+user.getUsername()+"</h3><br>" +
+            "Password: <h3>"+EncryptionDecription.decrypt(user.getEncPassword())+"</h3><br>" +
+            "<br>" +
+            "You can use the below link to login<br>" +
+            "<br>" +
+            "<a href=\"https://appkube.synectiks.net\">https://appkube.synectiks.net</a> <br>" +
+            "<br>" +
+            "Best regards,<br><h3>" +ownerName+"</h3>";
         // Create a request to send an email
         SendEmailRequest request = new SendEmailRequest()
             .withSource(awsSenderMail)
