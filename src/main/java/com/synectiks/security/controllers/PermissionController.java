@@ -78,7 +78,7 @@ public class PermissionController implements IApiController {
 	}
 
 	@Override
-	@RequestMapping(IConsts.API_FIND_ID)
+	@RequestMapping(path =IConsts.API_FIND_ID, method = RequestMethod.GET)
 	public ResponseEntity<Object> findById(@PathVariable("id") Long id) {
 		Permission entity = null;
 		try {
