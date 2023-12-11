@@ -82,19 +82,20 @@ public class TokenProvider implements InitializingBean {
     }
 
     public Authentication getAuthentication(String token) {
-        Claims claims = Jwts.parser()
-            .setSigningKey(key)
-            .parseClaimsJws(token)
-            .getBody();
+//        Claims claims = Jwts.parser()
+//            .setSigningKey(key)
+//            .parseClaimsJws(token)
+//            .getBody();
 
-        Collection<? extends GrantedAuthority> authorities =
-            Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toList());
+        Collection<? extends GrantedAuthority> authorities = new ArrayList<>();
+//            Arrays.stream(claims.get(AUTHORITIES_KEY).toString().split(","))
+//                .map(SimpleGrantedAuthority::new)
+//                .collect(Collectors.toList());
 
-        User principal = new User(claims.getSubject(), "", authorities);
+//        User principal = new User(claims.getSubject(), "", authorities);
 
-        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+//        return new UsernamePasswordAuthenticationToken(principal, token, authorities);
+        return new UsernamePasswordAuthenticationToken("", "", authorities);
     }
 
     public boolean validateToken(String authToken) {
