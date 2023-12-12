@@ -60,8 +60,10 @@ spring:
     name: security
   datasource:
     url: jdbc:postgresql://postgresql.ch8wfucynpvq.us-east-1.rds.amazonaws.com:5431/security
+#    url: jdbc:postgresql://localhost:5432/security
     username: postgres
     password: Synect!ks2023
+#    password: postgres
   profiles:
     # The commented value for `active` can be replaced with valid Spring profiles to load.
     # Otherwise, it will be filled in by maven when building the JAR file
@@ -107,6 +109,12 @@ spring:
         size: 2
   thymeleaf:
     mode: HTML
+  mail:
+#    protocol: smtp
+    host: smtp.gmail.com
+    port: 587
+    username:
+    password:
 
 server:
   port: 8094

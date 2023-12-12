@@ -151,6 +151,7 @@ public class UserController implements IApiController {
      *      using POST API of target service.
      * organization - A name, if not found API tries to push it into the organization table and this will become
      *      organization of user
+     * roleId - comma separated list of role id. e.g. 1,2,3
      * @param type
      * @param organization
      * @param username
@@ -158,6 +159,7 @@ public class UserController implements IApiController {
      * @param email
      * @param ownerId
      * @param targetService
+     * @param roleId
      * @param file
      * @param request
      * @return
@@ -170,20 +172,25 @@ public class UserController implements IApiController {
                                          @RequestParam(name = "email", required = false) String email,
                                          @RequestParam(name = "ownerId", required = false) Long ownerId,
                                          @RequestParam(name = "targetService", required = false) String targetService,
-			@RequestParam(name = "file", required = false) MultipartFile file, HttpServletRequest request) {
+                                         @RequestParam(name = "roleId", required = false) String roleId,
+                                         @RequestParam(name = "file", required = false) MultipartFile file,
+                                         HttpServletRequest request) {
+        logger.info("Request to create new user. user name: {}",username);
         // check if user already exists
         User user = this.userRepository.findByUsername(username);
 		if (user != null) {
-            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Login id already exists", null);
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+            logger.error("User name/Login id already exists. user name: {}",username);
+            Status st = setMessage(HttpStatus.valueOf(421).value(), "ERROR","Login id already exists", null);
+            return ResponseEntity.status(HttpStatus.valueOf(421)).body(st);
 		}
 		// check for duplicate email
 		user = new User();
 		user.setEmail(email);
         Optional<User> oUser = this.userRepository.findOne(Example.of(user));
 		if (oUser.isPresent()) {
-            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+            logger.error("Email already exists. email: {}",email);
+            Status st = setMessage(HttpStatus.valueOf(422).value(), "ERROR","Email already exists", null);
+            return ResponseEntity.status(HttpStatus.valueOf(422)).body(st);
 		}
 
         user = new User();
@@ -200,20 +207,39 @@ public class UserController implements IApiController {
                 user.setOrganization(oOrg.get());
             }
         }
+        createUser(user, type, username, password, email, ownerId);
+
+        if(!StringUtils.isBlank(roleId)){
+            logger.info("Assigning role groups to user");
+            List<Role> roleList = new ArrayList<>();
+            StringTokenizer token = new StringTokenizer(roleId, ",");
+            while (token.hasMoreTokens()) {
+                Optional<Role> oRole = roleRepository.findById(Long.parseLong(token.nextToken()));
+                if (oRole.isPresent()) {
+                    logger.debug("Role found. Role name: {}, is group: {}", oRole.get().getName(), oRole.get().isGrp());
+                    roleList.add(oRole.get());
+                }
+            }
+            if(roleList.size() > 0){
+                user.setRoles(roleList);
+            }
+        }
+
+        logger.info("Saving user: {}", user.getUsername());
+        user = userRepository.save(user);
+
 		try {
-            createUser(user, type, username, password, email, ownerId);
-            logger.info("Saving user: " + user);
-			user = userRepository.save(user);
             if(file != null){
                 addProfileImage(file, user);
             }
-			getDocumentList(user);
+            getDocumentList(user);
             //send mail
+            logger.info("User created successfully. User id: {}, Sending mail.  ",user.getId());
             SendEmailResult status = awsEmailService.sendNewUserMail(user);
 		} catch (Throwable th) {
 			logger.error("Exception: ",th);
-            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Service issues. User data cannot be saved", null);
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+            Status st = setMessage(HttpStatus.INTERNAL_SERVER_ERROR.value(), "ERROR","Service issues. User data cannot be saved", null);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(st);
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(user);
 	}
