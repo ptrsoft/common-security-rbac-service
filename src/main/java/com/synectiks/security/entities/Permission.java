@@ -1,9 +1,8 @@
 package com.synectiks.security.entities;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.domain.PSqlEntity;
 
@@ -19,9 +18,16 @@ public class Permission extends PSqlEntity {
 	@Column(nullable = true)
     private Long version;
     private String name;
-//    private String permission;
+
     @Column(nullable = true)
     private String description;
+
+    @Column(nullable = true)
+    private String status;
+
+    @OneToOne(targetEntity = Organization.class, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = "organizations", allowSetters = true)
+    private Organization organization;
 
     public Long getVersion() {
         return version;
@@ -39,14 +45,6 @@ public class Permission extends PSqlEntity {
         this.name = name;
     }
 
-//    public String getPermission() {
-//        return permission;
-//    }
-//
-//    public void setPermission(String permis) {
-//        this.permission = permis;
-//    }
-
     public String getDescription() {
         return description;
     }
@@ -55,11 +53,28 @@ public class Permission extends PSqlEntity {
         this.description = description;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
+    }
+
 	@Override
 	public String toString() {
 		return "{\"" + (version != null ? "version\": \"" + version + "\", " : "")
 				+ (name != null ? "name\": \"" + name + "\", " : "")
 				+ (description != null ? "description\": \"" + description + "\", " : "")
+                + (status != null ? "status\": \"" + status + "\", " : "")
 				+ ( (id!=null && id > 0) ? "id\": \"" + id + "\", " : "")
 				+ (createdAt != null ? "createdAt\": \"" + createdAt + "\", " : "")
 				+ (updatedAt != null ? "updatedAt\": \"" + updatedAt + "\", " : "")

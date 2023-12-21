@@ -13,9 +13,7 @@ import com.synectiks.security.email.MailService;
 import com.synectiks.security.entities.*;
 import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.mfa.GoogleMultiFactorAuthenticationService;
-import com.synectiks.security.repositories.OrganizationRepository;
-import com.synectiks.security.repositories.RoleRepository;
-import com.synectiks.security.repositories.UserRepository;
+import com.synectiks.security.repositories.*;
 import com.synectiks.security.service.DocumentService;
 import com.synectiks.security.util.*;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
@@ -48,6 +46,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Rajesh
@@ -69,7 +68,16 @@ public class UserController implements IApiController {
 	@Autowired
 	private RoleRepository roleRepository;
 
-	@Autowired
+    @Autowired
+    private PolicyRepository policyRepository;
+
+    @Autowired
+    private PermissionRepository permissionRepository;
+
+    @Autowired
+    private PermissionCategoryRepository permissionCategoryRepository;
+
+    @Autowired
 	private OrganizationRepository organizationRepository;
 
 	@Autowired
@@ -145,13 +153,14 @@ public class UserController implements IApiController {
 	}
 
     /**
-     * type - ADMIN, USER etc..
+     * type - SUPER_ADMIN, ADMIN, USER etc..
      * targetService - cmdb etc...
      *      If targetService provided, API tries to push the newly created organization to the given service
      *      using POST API of target service.
      * organization - A name, if not found API tries to push it into the organization table and this will become
      *      organization of user
      * roleId - comma separated list of role id. e.g. 1,2,3
+     * errorOnOrgFound - boolean flag to allow second organization admin. true - not allow, false - allow
      * @param type
      * @param organization
      * @param username
@@ -160,6 +169,7 @@ public class UserController implements IApiController {
      * @param ownerId
      * @param targetService
      * @param roleId
+     * @param errorOnOrgFound
      * @param file
      * @param request
      * @return
@@ -173,6 +183,7 @@ public class UserController implements IApiController {
                                          @RequestParam(name = "ownerId", required = false) Long ownerId,
                                          @RequestParam(name = "targetService", required = false) String targetService,
                                          @RequestParam(name = "roleId", required = false) String roleId,
+                                         @RequestParam(name = "errorOnOrgFound", required = true) boolean errorOnOrgFound,
                                          @RequestParam(name = "file", required = false) MultipartFile file,
                                          HttpServletRequest request) {
         logger.info("Request to create new user. user name: {}",username);
@@ -194,6 +205,7 @@ public class UserController implements IApiController {
 		}
 
         user = new User();
+        createUser(user, type, username, password, email, ownerId);
 
         if (!StringUtils.isBlank(organization)) {
             // check if organization already present
@@ -204,10 +216,13 @@ public class UserController implements IApiController {
                 logger.info("Given organization not present. Organization: "+organization);
                 saveOrUpdateOrganization(organization, user, targetService);
             }else{
+                if(errorOnOrgFound){
+                    Status st = setMessage(HttpStatus.valueOf(418).value(), "ERROR","Organization already exists. Please contact organization administrator to get your login credentials", null);
+                    return ResponseEntity.status(HttpStatus.valueOf(418)).body(st);
+                }
                 user.setOrganization(oOrg.get());
             }
         }
-        createUser(user, type, username, password, email, ownerId);
 
         if(!StringUtils.isBlank(roleId)){
             logger.info("Assigning role groups to user");
@@ -225,22 +240,31 @@ public class UserController implements IApiController {
             }
         }
 
-        logger.info("Saving user: {}", user.getUsername());
-        user = userRepository.save(user);
+        if(StringUtils.isBlank(roleId) && Constants.USER_TYPE_ADMIN.equalsIgnoreCase(type) && ownerId == null){
+            logger.debug("Assigning default role group for organization admin");
+            List<Role> roleList = (List<Role>) roleRepository.findByCreatedByAndGrp(Constants.USER_TYPE_ADMIN.toLowerCase(), true);
+            if(roleList.size() > 0){
+                user.setRoles(roleList);
+            }
+        }
 
+        logger.debug("Saving user: {}", user.getUsername());
+        user = userRepository.save(user);
+        logger.info("User created successfully. User id: {}",user.getId());
 		try {
             if(file != null){
                 addProfileImage(file, user);
             }
             getDocumentList(user);
-            //send mail
-            logger.info("User created successfully. User id: {}, Sending mail.  ",user.getId());
-            SendEmailResult status = awsEmailService.sendNewUserMail(user);
 		} catch (Throwable th) {
 			logger.error("Exception: ",th);
-            Status st = setMessage(HttpStatus.INTERNAL_SERVER_ERROR.value(), "ERROR","Service issues. User data cannot be saved", null);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(st);
+//            Status st = setMessage(HttpStatus.INTERNAL_SERVER_ERROR.value(), "ERROR","Exception in sending mail. "+th.getMessage(), null);
+//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(st);
 		}
+        if(!StringUtils.isBlank(email)){
+            logger.info("Sending mail");
+            SendEmailResult status = awsEmailService.sendNewUserMail(user);
+        }
 		return ResponseEntity.status(HttpStatus.CREATED).body(user);
 	}
 
@@ -347,7 +371,6 @@ public class UserController implements IApiController {
 			user.setProfileImage(bytes);
 			logger.debug("user profile image saved successfully");
 		}
-
 	}
 
 	@Override
@@ -362,6 +385,9 @@ public class UserController implements IApiController {
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(entity);
 	}
+
+
+
 
 	@Override
 	@RequestMapping(IConsts.API_DELETE_ID)
@@ -444,10 +470,10 @@ public class UserController implements IApiController {
             organization.setUpdatedAt(user.getUpdatedAt());
             organization.setCreatedBy(user.getCreatedBy());
             organization.setUpdatedBy(user.getUpdatedBy());
-
+            organization.setStatus(Constants.ACTIVE);
             organization = this.organizationRepository.save(organization);
 
-            String url =  resoveTargetServiceUrl(targetService);
+            String url =  resolveTargetServiceUrl(targetService);
             if(!StringUtils.isBlank(url)){
                 try{
                     URI uri = new URI(url);
@@ -473,7 +499,7 @@ public class UserController implements IApiController {
 		}
 	}
 
-    public String resoveTargetServiceUrl(String targetService){
+    public String resolveTargetServiceUrl(String targetService){
         String url = null;
         if(!StringUtils.isBlank(targetService)){
             if("CMDB".equalsIgnoreCase(targetService)){
@@ -624,16 +650,6 @@ public class UserController implements IApiController {
             user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
             user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
         }
-
-
-//		if (!StringUtils.isBlank(organization)) {
-//			Organization org = new Organization();
-//            org.setName(organization.toUpperCase());
-//			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(org));
-//			if (oOrg.isPresent()) {
-//				user.setOrganization(oOrg.get());
-//			}
-//		}
 	}
 
 	@RequestMapping(path = "/updateOrganization", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -1152,6 +1168,7 @@ public class UserController implements IApiController {
         return ResponseEntity.status(HttpStatus.OK).body(st);
     }
 
+
 //	@RequestMapping(path = "/enableGoogleMfa")
 //	public ResponseEntity<Object> enableGoogleMfa(@RequestParam final String userName,
 //			@RequestParam final String organizationName) {
@@ -1259,5 +1276,68 @@ public class UserController implements IApiController {
         st.setMessage(msg);
         st.setObject(obj);
         return st;
+    }
+
+    @RequestMapping(path = "/get-user-hierarchy", method = RequestMethod.GET)
+    public ResponseEntity<Object> getUserHierarchy(@RequestParam String userName) {
+        logger.info("Request to get user hierarchy");
+        User user = this.userRepository.findByUsername(userName);
+        if(user == null){
+            logger.error("User not found. user name: {}",userName);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found. User name : "+userName, null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        Map<String, Object> userData = new HashMap<>();
+        List<Role> roleList = new ArrayList<>();
+        List<Role> roleGrpList = new ArrayList<>();
+        List<User> userList = new ArrayList<>();
+        List<Policy> policyList = new ArrayList<>();
+        List<PermissionCategory> permissionCategoryList = new ArrayList<>();
+        boolean isSuperAdmin = false;
+        for(Role role: user.getRoles()){
+            if(role.getName().equals("Super Admins") && role.isDefault() && role.isGrp()){
+                isSuperAdmin = true;
+                break;
+            }
+        }
+        if(isSuperAdmin){
+            logger.info("User role is admin");
+            roleGrpList = roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), true);
+            roleList = roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), false);
+            userList = userRepository.findByOrganizationId(user.getOrganization().getId());
+            policyList = policyRepository.findByOrganizationId(user.getOrganization().getId());
+            permissionCategoryList = permissionCategoryRepository.findByOrganizationId(user.getOrganization().getId());
+
+        }else {
+            logger.info("User role is not admin");
+            Map<Long, PermissionCategory> pMap = new HashMap<>();
+            for(Role roleGrp: user.getRoles()){
+                roleGrpList.add(roleGrp);
+                for(Role role: roleGrp.getRoles()){
+                    roleList.add(role);
+                    for(Policy policy: role.getPolicies()){
+                        policyList.add(policy);
+                        Set<Long> permissionCategorySet = policy.getPermissions().stream().map(pap -> pap.getPermissionCategoryId()).collect(Collectors.toSet());
+                        for(Long papId: permissionCategorySet){
+                            Optional<PermissionCategory> oPc = permissionCategoryRepository.findById(papId);
+                            if(oPc.isPresent()){
+                                pMap.put(papId, oPc.get());
+                            }
+                        }
+                    }
+                }
+            }
+            for(Long papId: pMap.keySet()){
+                permissionCategoryList.add(pMap.get(papId));
+            }
+            userList.add(user);
+        }
+        userData.put("isAdmin", isSuperAdmin);
+        userData.put("roleGroups",roleGrpList);
+        userData.put("roles",roleList);
+        userData.put("policies",policyList);
+        userData.put("users",userList);
+        userData.put("permissionCategories",permissionCategoryList);
+        return ResponseEntity.status(HttpStatus.OK).body(userData);
     }
 }

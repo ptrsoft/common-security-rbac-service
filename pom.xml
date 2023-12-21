@@ -84,6 +84,7 @@
         <junit.itReportFolder>${project.testresult.directory}/integrationTest</junit.itReportFolder>
         <lombok.version>1.18.20</lombok.version>
         <apache-shiro-core-version>1.4.0</apache-shiro-core-version>
+        <mvnflyway.version>9.8.1</mvnflyway.version>
         <!-- jhipster-needle-maven-property -->
     </properties>
 
@@ -101,6 +102,12 @@
     </dependencyManagement>
 
     <dependencies>
+        <dependency>
+            <groupId>org.flywaydb</groupId>
+            <artifactId>flyway-core</artifactId>
+            <version>6.0.0</version>
+            <scope>runtime</scope>
+        </dependency>
         <dependency>
             <groupId>org.apache.shiro</groupId>
             <artifactId>shiro-spring-boot-web-starter</artifactId>
@@ -127,7 +134,7 @@
     		<groupId>org.springframework</groupId>
     		<artifactId>spring-core</artifactId>
 		</dependency>
-        
+
         <dependency>
             <groupId>com.google.zxing</groupId>
             <artifactId>javase</artifactId>
@@ -972,6 +979,11 @@
 
                 </plugin>
                 <!-- jhipster-needle-maven-add-plugin-management -->
+<!--                <plugin>-->
+<!--                    <groupId>org.flywaydb</groupId>-->
+<!--                    <artifactId>flyway-maven-plugin</artifactId>-->
+<!--                    <version>${mvnflyway.version}</version>-->
+<!--                </plugin>-->
             </plugins>
         </pluginManagement>
     </build>
@@ -993,6 +1005,12 @@
             <properties>
                 <profile.tls>,tls</profile.tls>
             </properties>
+        </profile>
+        <profile>
+            <id>local</id>
+            <activation>
+                <activeByDefault>false</activeByDefault>
+            </activation>
         </profile>
         <profile>
             <id>dev</id>

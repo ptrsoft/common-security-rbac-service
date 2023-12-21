@@ -1,5 +1,6 @@
 package com.synectiks.security.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.domain.PSqlEntity;
 import org.hibernate.annotations.ColumnDefault;
@@ -28,13 +29,10 @@ public class PermissionCategory extends PSqlEntity {
 //    @ColumnDefault(value = "ACTIVE")
     private String status;
 
-    public String getStatus() {
-        return status;
-    }
+    @OneToOne(targetEntity = Organization.class, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = "organizations", allowSetters = true)
+    private Organization organization;
 
-    public void setStatus(String status) {
-        this.status = status;
-    }
 
     @ManyToMany(targetEntity = Permission.class, fetch = FetchType.LAZY)
 	private List<Permission> permissions;
@@ -63,7 +61,23 @@ public class PermissionCategory extends PSqlEntity {
 		this.description = description;
 	}
 
-	public List<Permission> getPermissions() {
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
+    }
+
+    public List<Permission> getPermissions() {
 		return permissions;
 	}
 
@@ -71,7 +85,8 @@ public class PermissionCategory extends PSqlEntity {
 		this.permissions = permissions;
 	}
 
-	@Override
+
+    @Override
 	public String toString() {
 		return "{" + (version != null ? "\"version\": \"" + version + "\", " : "")
 				+ (name != null ? "\"name\": \"" + name + "\", " : "")

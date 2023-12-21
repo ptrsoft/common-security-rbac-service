@@ -4,6 +4,7 @@
 package com.synectiks.security.controllers;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.synectiks.security.config.Constants;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.entities.Policy;
@@ -61,6 +62,11 @@ public class PolicyController implements IApiController {
 			String user = IUtils.getUserFromRequest(request);
 			entity = IUtils.createEntity(service, user, Policy.class);
 			logger.info("Policy: " + entity);
+            if(StringUtils.isBlank(entity.getStatus())){
+                entity.setStatus(Constants.ACTIVE);
+            }else {
+                entity.setStatus(entity.getStatus().toUpperCase());
+            }
             // get assigned permission array in a variable
             List<PolicyAssignedPermissions> assignedPermissions = entity.getPermissions();
             // set assigned permission array null in policy
@@ -131,7 +137,7 @@ public class PolicyController implements IApiController {
                 existingPolicy.setDescription(service.getDescription());
             }
             if(!StringUtils.isBlank(service.getStatus())){
-                existingPolicy.setStatus(service.getStatus());
+                existingPolicy.setStatus(service.getStatus().toUpperCase());
             }
 			repository.save(existingPolicy);
 		} catch (Throwable th) {

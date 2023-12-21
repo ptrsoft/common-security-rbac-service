@@ -3,12 +3,9 @@ package com.synectiks.security.entities;
 import java.util.List;
 import java.util.Set;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToMany;
-import javax.persistence.Table;
+import javax.persistence.*;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.domain.PSqlEntity;
@@ -41,6 +38,10 @@ public class Role extends PSqlEntity {
     public void setDefault(boolean aDefault) {
         isDefault = aDefault;
     }
+
+    @OneToOne(targetEntity = Organization.class, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = "organizations", allowSetters = true)
+    private Organization organization;
 
     @Column(nullable = true)
 	private String description;
@@ -111,6 +112,14 @@ public class Role extends PSqlEntity {
 	public void setGrp(boolean grp) {
 		this.grp = grp;
 	}
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
+    }
 
 	@Override
 	public String toString() {

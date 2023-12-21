@@ -1,5 +1,6 @@
 package com.synectiks.security.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.domain.PSqlEntity;
 
@@ -28,6 +29,10 @@ public class Policy extends PSqlEntity {
 
     @ManyToMany(targetEntity = PolicyAssignedPermissions.class, fetch = FetchType.LAZY)
     private List<PolicyAssignedPermissions> permissions;
+
+    @OneToOne(targetEntity = Organization.class, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = "organizations", allowSetters = true)
+    private Organization organization;
 
 
     public String getName() {
@@ -68,6 +73,14 @@ public class Policy extends PSqlEntity {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
     }
 
     @Override

@@ -22,4 +22,6 @@ public interface UserRepository extends JpaRepository<User, Long>{//,	IUserRepos
 
     List<User> findByOwnerId(long id);
 
+    List<User> findByOrganizationId(Long organizationId);
+
 }

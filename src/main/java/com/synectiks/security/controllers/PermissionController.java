@@ -11,6 +11,8 @@ import java.util.Map;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.synectiks.security.config.Constants;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -68,7 +70,12 @@ public class PermissionController implements IApiController {
 		try {
 			String user = IUtils.getUserFromRequest(request);
 			entity = IUtils.createEntity(service, user, Permission.class);
-			entity = repository.save(entity);
+            if(StringUtils.isBlank(entity.getStatus())){
+                entity.setStatus(Constants.ACTIVE);
+            }else {
+                entity.setStatus(entity.getStatus().toUpperCase());
+            }
+            entity = repository.save(entity);
 		} catch (Throwable th) {
 			th.printStackTrace();
 			// logger.error(th.getMessage(), th);
@@ -106,10 +113,24 @@ public class PermissionController implements IApiController {
 	@RequestMapping(IConsts.API_UPDATE)
 	public ResponseEntity<Object> update(@RequestBody ObjectNode entity, HttpServletRequest request) {
 		Permission service = null;
+        Permission existingPermission = null;
 		try {
 			String user = IUtils.getUserFromRequest(request);
 			service = IUtils.createEntity(entity, user, Permission.class);
-			repository.save(service);
+            existingPermission = repository.findById(service.getId()).orElse(null);
+            if(existingPermission == null){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("permission not found. permission id: "+service.getId());
+            }
+            if(!StringUtils.isBlank(service.getName())){
+                existingPermission.setName(service.getName());
+            }
+            if(!StringUtils.isBlank(service.getDescription())){
+                existingPermission.setDescription(service.getDescription());
+            }
+            if(!StringUtils.isBlank(service.getStatus())){
+                existingPermission.setStatus(service.getStatus().toUpperCase());
+            }
+            repository.save(service);
 		} catch (Throwable th) {
 			logger.error(th.getMessage(), th);
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
