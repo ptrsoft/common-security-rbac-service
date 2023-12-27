@@ -10,9 +10,10 @@ public final class Constants {
     public static final String DEACTIVE = "DEACTIVE";
     public static final String USER_TYPE_USER = "USER";
     public static final String USER_TYPE_ADMIN = "ADMIN";
+    public static final String USER_TYPE_SUPER_ADMIN = "Super Admins";
 
     public static final String USER_TYPE_ORG_USER = "ORG_USER";
-    public static final String USER_TYPE_SUPER_ADMIN = "ROOT";
+    public static final String USER_TYPE_ROOT = "ROOT";
 
     public static final String USER_INVITE_SENT = "INVITE_SENT";
     public static final String USER_INVITE_ACCEPTENCE_PENDING = "PENDING";

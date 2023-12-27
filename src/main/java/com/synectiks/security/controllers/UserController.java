@@ -1293,14 +1293,17 @@ public class UserController implements IApiController {
         List<User> userList = new ArrayList<>();
         List<Policy> policyList = new ArrayList<>();
         List<PermissionCategory> permissionCategoryList = new ArrayList<>();
-        boolean isSuperAdmin = false;
-        for(Role role: user.getRoles()){
-            if(role.getName().equals("Super Admins") && role.isDefault() && role.isGrp()){
-                isSuperAdmin = true;
-                break;
-            }
+        boolean isAdmin = false;
+        if(Constants.USER_TYPE_SUPER_ADMIN.equalsIgnoreCase(user.getType()) || Constants.USER_TYPE_ADMIN.equalsIgnoreCase(user.getType())){
+            isAdmin = true;
         }
-        if(isSuperAdmin){
+//        for(Role role: user.getRoles()){
+//            if(role.getName().equals("Super Admins") && role.isDefault() && role.isGrp()){
+//                isSuperAdmin = true;
+//                break;
+//            }
+//        }
+        if(isAdmin){
             logger.info("User role is admin");
             roleGrpList = roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), true);
             roleList = roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), false);
@@ -1332,7 +1335,7 @@ public class UserController implements IApiController {
             }
             userList.add(user);
         }
-        userData.put("isAdmin", isSuperAdmin);
+        userData.put("isAdmin", isAdmin);
         userData.put("roleGroups",roleGrpList);
         userData.put("roles",roleList);
         userData.put("policies",policyList);
