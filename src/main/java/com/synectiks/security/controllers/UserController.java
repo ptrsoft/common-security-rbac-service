@@ -18,6 +18,7 @@ import com.synectiks.security.service.DocumentService;
 import com.synectiks.security.util.*;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import org.apache.commons.lang3.StringUtils;
+import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.*;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
@@ -25,10 +26,12 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -208,23 +211,29 @@ public class UserController implements IApiController {
         createUser(user, type, username, password, email, ownerId);
 
         if (!StringUtils.isBlank(organization)) {
-            // check if organization already present
-            Organization orgObj = new Organization();
-            orgObj.setName(organization.toUpperCase());
-            Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(orgObj));
-            if (!oOrg.isPresent()) {
-                logger.info("Given organization not present. Organization: "+organization);
-                saveOrUpdateOrganization(organization, user, targetService);
-            }else{
+            List<Organization> organizationList = this.organizationRepository.findAll();
+            List<Organization> existingOrg = new ArrayList<>();
+            for(Organization orgObj: organizationList){
+                if(organization.equalsIgnoreCase(orgObj.getName())){
+                    existingOrg.add(orgObj);
+                    break;
+                }
+            }
+            if(existingOrg.size() > 0){
                 if(errorOnOrgFound){
                     Status st = setMessage(HttpStatus.valueOf(418).value(), "ERROR","Organization already exists. Please contact organization administrator to get your login credentials", null);
                     return ResponseEntity.status(HttpStatus.valueOf(418)).body(st);
                 }
-                user.setOrganization(oOrg.get());
+                //if no error need to be thrown, it silently add the organization to the user
+                user.setOrganization(existingOrg.get(0));
+            }else{
+                logger.info("Given organization not present. Organization: "+organization);
+                saveOrUpdateOrganization(organization, user, targetService);
             }
         }
 
-        if(!StringUtils.isBlank(roleId)){
+        //this statement executes when user created with the create user functionality of UI.
+        if(!StringUtils.isBlank(roleId) && Constants.USER_TYPE_USER.equalsIgnoreCase(type)){
             logger.info("Assigning role groups to user");
             List<Role> roleList = new ArrayList<>();
             StringTokenizer token = new StringTokenizer(roleId, ",");
@@ -240,6 +249,7 @@ public class UserController implements IApiController {
             }
         }
 
+        //this statement executes when user created with the sign-up page.
         if(StringUtils.isBlank(roleId) && Constants.USER_TYPE_ADMIN.equalsIgnoreCase(type) && ownerId == null){
             logger.debug("Assigning default role group for organization admin");
             List<Role> roleList = (List<Role>) roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, true);
@@ -475,23 +485,49 @@ public class UserController implements IApiController {
 
             String url =  resolveTargetServiceUrl(targetService);
             if(!StringUtils.isBlank(url)){
-                try{
-                    URI uri = new URI(url);
-                    Organization org = new Organization();
-                    org.setName(organization.getName());
-                    org.setSecurityServiceOrgId(organization.getId());
-                    ResponseEntity<Organization> result = restTemplate.postForEntity(uri, org, Organization.class);
-                    if(result != null && result.getBody() != null){
-                        logger.info("Organization push to CMDB. Updating CMDB id security service organization for cross reference");
-                        Organization cmdbOrg = result.getBody();
-                        organization.setCmdbOrgId(cmdbOrg.getId());
-                        organization = this.organizationRepository.save(organization);
-                        user.setOrganization(organization);
+                // fetch organization from cmdb and check if exists
+                boolean isOrgFoundInCmdb = false;
+                ResponseEntity<List<Organization>> response = restTemplate.exchange( url, HttpMethod.GET,null, new ParameterizedTypeReference<List<Organization>>(){});
+                if(response != null && response.getBody() != null){
+                    List<Organization> organizationList = response.getBody();
+                    for(Organization org: organizationList){
+                        if(orgName.equalsIgnoreCase(org.getName())){
+                            // if exists
+                            isOrgFoundInCmdb = true;
+                            //keep cmdb reference in local organization
+                            organization.setCmdbOrgId(org.getId());
+                            organization = this.organizationRepository.save(organization);
+                            user.setOrganization(organization);
+                            //update cmdb organization with local organization reference
+                            org.setSecurityServiceOrgId(organization.getId());
+                            restTemplate.patchForObject(url, org, Organization.class);
+                            break;
+                        }
                     }
-                }catch (Exception e){
-                    logger.error("Exception while pushing organization to CMDB. ",e);
-                    user.setOrganization(organization);
                 }
+                if(!isOrgFoundInCmdb){
+                    // if not exists save its reference in local organization
+//                    try{
+//                        URI uri = new URI(url);
+                    // push this new organization to cmdb
+                        Organization org = new Organization();
+                        org.setName(organization.getName());
+                        org.setSecurityServiceOrgId(organization.getId());
+                        ResponseEntity<Organization> result = restTemplate.postForEntity(url, org, Organization.class);
+                        if(result != null && result.getBody() != null){
+                            // if successfully pushed, keep cmdb reference in local organization
+                            logger.info("Organization push to CMDB. Updating CMDB id security service organization for cross reference");
+                            Organization cmdbOrg = result.getBody();
+                            organization.setCmdbOrgId(cmdbOrg.getId());
+                            organization = this.organizationRepository.save(organization);
+                            user.setOrganization(organization);
+                        }
+//                    }catch (Exception e){
+//                        logger.error("Exception while pushing organization to CMDB. ",e);
+//                        user.setOrganization(organization);
+//                    }
+                }
+
             }else{
                 user.setOrganization(organization);
             }
@@ -500,13 +536,12 @@ public class UserController implements IApiController {
 	}
 
     public String resolveTargetServiceUrl(String targetService){
-        String url = null;
         if(!StringUtils.isBlank(targetService)){
             if("CMDB".equalsIgnoreCase(targetService)){
                 return cmdbOrgUrl;
             }
         }
-        return url;
+        return null;
     }
 
 	private void saveUpdateOrganization(ObjectNode  reqObje, User user, Date currentDate) throws URISyntaxException {
@@ -614,7 +649,7 @@ public class UserController implements IApiController {
 
 	private void createUser(User user, String type, String username, String password, String email, Long ownerId) {
 		if (!StringUtils.isBlank(type)) {
-			user.setType(type);
+			user.setType(type.toUpperCase());
 		}
 		if (!StringUtils.isBlank(username)) {
 			user.setUsername(username);
@@ -1294,27 +1329,31 @@ public class UserController implements IApiController {
         List<Policy> policyList = new ArrayList<>();
         List<PermissionCategory> permissionCategoryList = new ArrayList<>();
         boolean isAdmin = false;
-        if(Constants.USER_TYPE_SUPER_ADMIN.equalsIgnoreCase(user.getType()) || Constants.USER_TYPE_ADMIN.equalsIgnoreCase(user.getType())){
-            isAdmin = true;
-        }
-//        for(Role role: user.getRoles()){
-//            if(role.getName().equals("Super Admins") && role.isDefault() && role.isGrp()){
-//                isSuperAdmin = true;
-//                break;
-//            }
+//        if(Constants.USER_TYPE_SUPER_ADMIN.equalsIgnoreCase(user.getType()) || Constants.USER_TYPE_ADMIN.equalsIgnoreCase(user.getType())){
+//            isAdmin = true;
 //        }
+        for(Role role: user.getRoles()){
+            if(Constants.USER_TYPE_SUPER_ADMIN.equalsIgnoreCase(role.getName()) && role.isDefault() && role.isGrp()){
+                isAdmin = true;
+                break;
+            }
+        }
         if(isAdmin){
             logger.info("User type is {}", user.getType());
 
-            roleGrpList.addAll((List<Role>) roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, true));
-            roleList.addAll((List<Role>) roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, false));
+            roleGrpList.addAll(roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, true));
+            roleList.addAll(roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, false));
 
             roleGrpList.addAll(roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), true));
             roleList.addAll(roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), false));
 
             userList = userRepository.findByOrganizationId(user.getOrganization().getId());
-            policyList = policyRepository.findByOrganizationId(user.getOrganization().getId());
-            permissionCategoryList = permissionCategoryRepository.findByOrganizationId(user.getOrganization().getId());
+
+            policyList.addAll(policyRepository.findByCreatedBy(Constants.SYSTEM_ACCOUNT));
+            policyList.addAll(policyRepository.findByOrganizationId(user.getOrganization().getId()));
+
+            permissionCategoryList.addAll(permissionCategoryRepository.findByCreatedBy(Constants.SYSTEM_ACCOUNT));
+            permissionCategoryList.addAll(permissionCategoryRepository.findByOrganizationId(user.getOrganization().getId()));
 
         }else {
             logger.info("User role is not admin");

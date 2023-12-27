@@ -14,5 +14,5 @@ public interface PermissionCategoryRepository extends JpaRepository<PermissionCa
 
 	public String findIdByName(String name);
     List<PermissionCategory> findByOrganizationId(Long organizationId);
-
+    List<PermissionCategory> findByCreatedBy(String createdBy);
 }

@@ -14,5 +14,5 @@ public interface PolicyRepository extends JpaRepository<Policy, Long>{
 
 	public String findIdByName(String name);
     List<Policy> findByOrganizationId(Long organizationId);
-
+    List<Policy> findByCreatedBy(String createdBy);
 }
