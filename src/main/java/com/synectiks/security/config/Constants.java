@@ -5,7 +5,7 @@ package com.synectiks.security.config;
  */
 public final class Constants {
 
-    public static final String SYSTEM_ACCOUNT = "system";
+    public static final String SYSTEM_ACCOUNT = "System";
     public static final String ACTIVE = "ACTIVE";
     public static final String DEACTIVE = "DEACTIVE";
     public static final String USER_TYPE_USER = "USER";
