@@ -9,9 +9,11 @@ import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.entities.Policy;
 import com.synectiks.security.entities.PolicyAssignedPermissions;
+import com.synectiks.security.entities.User;
 import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.repositories.PolicyAssignedPermissionsRepository;
 import com.synectiks.security.repositories.PolicyRepository;
+import com.synectiks.security.repositories.UserRepository;
 import com.synectiks.security.util.IUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -38,6 +40,9 @@ public class PolicyController implements IApiController {
 	private PolicyRepository repository;
 
     @Autowired
+    private UserRepository userRepository;
+
+    @Autowired
     private PolicyAssignedPermissionsRepository policyAssignedPermissionsRepository;
 
 	@Override
@@ -59,8 +64,8 @@ public class PolicyController implements IApiController {
 			HttpServletRequest request) {
 		Policy entity = null;
 		try {
-			String user = IUtils.getUserFromRequest(request);
-			entity = IUtils.createEntity(service, user, Policy.class);
+			String userName = IUtils.getUserFromRequest(request);
+			entity = IUtils.createEntity(service, userName, Policy.class);
 			logger.info("Policy: " + entity);
             if(StringUtils.isBlank(entity.getStatus())){
                 entity.setStatus(Constants.ACTIVE);
@@ -72,6 +77,8 @@ public class PolicyController implements IApiController {
             // set assigned permission array null in policy
             entity.setPermissions(null);
             // save policy
+            User user = userRepository.findByUsername(entity.getCreatedBy());
+            entity.setOrganization(user.getOrganization());
             entity = repository.save(entity);
             // iterate assigned permission array and set policy in each object and save
             for(PolicyAssignedPermissions policyAssignedPermissions : assignedPermissions){

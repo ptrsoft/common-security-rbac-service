@@ -7,6 +7,8 @@ import java.util.List;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.synectiks.security.entities.User;
+import com.synectiks.security.repositories.UserRepository;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -36,6 +38,9 @@ public class RoleController implements IApiController {
 
 	@Autowired
 	private RoleRepository repository;
+
+    @Autowired
+    private UserRepository userRepository;
 
 	@Override
 	@RequestMapping(path = IConsts.API_FIND_ALL, method = RequestMethod.GET)
@@ -71,8 +76,11 @@ public class RoleController implements IApiController {
 			HttpServletRequest request) {
 		Role entity = null;
 		try {
-			String user = IUtils.getUserFromRequest(request);
-			entity = IUtils.createEntity(service, user, Role.class);
+
+			String userName = IUtils.getUserFromRequest(request);
+			entity = IUtils.createEntity(service, userName, Role.class);
+            User user = userRepository.findByUsername(entity.getCreatedBy());
+            entity.setOrganization(user.getOrganization());
 			logger.info("Role: " + entity);
 			entity = repository.save(entity);
 		} catch (Throwable th) {
