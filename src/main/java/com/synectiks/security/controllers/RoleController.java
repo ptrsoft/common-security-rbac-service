@@ -9,6 +9,7 @@ import javax.servlet.http.HttpServletRequest;
 
 import com.synectiks.security.entities.User;
 import com.synectiks.security.repositories.UserRepository;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -76,16 +77,18 @@ public class RoleController implements IApiController {
 			HttpServletRequest request) {
 		Role entity = null;
 		try {
-
 			String userName = IUtils.getUserFromRequest(request);
 			entity = IUtils.createEntity(service, userName, Role.class);
+            if(StringUtils.isBlank(entity.getCreatedBy())){
+                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("createdBy not provided");
+            }
             User user = userRepository.findByUsername(entity.getCreatedBy());
             entity.setOrganization(user.getOrganization());
 			logger.info("Role: " + entity);
 			entity = repository.save(entity);
 		} catch (Throwable th) {
-			th.printStackTrace();
-			//logger.error(th.getMessage(), th);
+//			th.printStackTrace();
+			logger.error(th.getMessage(), th);
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(entity);

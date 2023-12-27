@@ -1304,9 +1304,14 @@ public class UserController implements IApiController {
 //            }
 //        }
         if(isAdmin){
-            logger.info("User role is admin");
-            roleGrpList = roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), true);
-            roleList = roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), false);
+            logger.info("User type is {}", user.getType());
+
+            roleGrpList.addAll((List<Role>) roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, true));
+            roleList.addAll((List<Role>) roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, false));
+
+            roleGrpList.addAll(roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), true));
+            roleList.addAll(roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), false));
+
             userList = userRepository.findByOrganizationId(user.getOrganization().getId());
             policyList = policyRepository.findByOrganizationId(user.getOrganization().getId());
             permissionCategoryList = permissionCategoryRepository.findByOrganizationId(user.getOrganization().getId());
