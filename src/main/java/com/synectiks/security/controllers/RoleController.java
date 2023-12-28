@@ -3,10 +3,13 @@
  */
 package com.synectiks.security.controllers;
 
+import java.util.Date;
 import java.util.List;
+import java.util.Optional;
 
 import javax.servlet.http.HttpServletRequest;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.synectiks.security.entities.User;
 import com.synectiks.security.repositories.UserRepository;
 import org.apache.commons.lang3.StringUtils;
@@ -29,8 +32,7 @@ import com.synectiks.security.util.IUtils;
  * @author Rajesh
  */
 @RestController
-@RequestMapping(path = IApiController.SEC_API
-		+ IApiController.URL_ROLES, method = RequestMethod.POST)
+@RequestMapping(path = IApiController.SEC_API + IApiController.URL_ROLES, method = RequestMethod.POST)
 @CrossOrigin
 public class RoleController implements IApiController {
 
@@ -84,12 +86,27 @@ public class RoleController implements IApiController {
             }
             User user = userRepository.findByUsername(entity.getCreatedBy());
             entity.setOrganization(user.getOrganization());
+            entity.setCreatedAt(new Date());
 			logger.info("Role: " + entity);
-			entity = repository.save(entity);
+            entity = repository.save(entity);
+
+            if(entity.isGrp() && service.get("users") != null){
+                JsonNode jsonNode = service.get("users");
+                if(jsonNode != null && jsonNode.isArray()){
+                    for (final JsonNode objNode : jsonNode) {
+                        Optional<User> oUser = userRepository.findById(objNode.get("id").asLong());
+                        if(oUser.isPresent()){
+                            User tempUser = oUser.get();
+                            tempUser.getRoles().add(entity);
+                            userRepository.save(tempUser);
+                        }
+                    }
+                }
+            }
+
 		} catch (Throwable th) {
-//			th.printStackTrace();
-			logger.error(th.getMessage(), th);
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
+			logger.error(th.getMessage(), th.getStackTrace());
+			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th.getMessage());
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(entity);
 	}
