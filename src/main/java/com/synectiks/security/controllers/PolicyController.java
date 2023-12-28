@@ -105,8 +105,8 @@ public class PolicyController implements IApiController {
 
 		} catch (Throwable th) {
 //			th.printStackTrace();
-			logger.error(th.getMessage(), th.getStackTrace());
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(th.getMessage());
+			logger.error(th.getMessage(), th);
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(th.getStackTrace());
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(entity);
 	}
