@@ -7,13 +7,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.Constants;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
-import com.synectiks.security.entities.Policy;
-import com.synectiks.security.entities.PolicyAssignedPermissions;
-import com.synectiks.security.entities.User;
+import com.synectiks.security.entities.*;
 import com.synectiks.security.interfaces.IApiController;
-import com.synectiks.security.repositories.PolicyAssignedPermissionsRepository;
-import com.synectiks.security.repositories.PolicyRepository;
-import com.synectiks.security.repositories.UserRepository;
+import com.synectiks.security.repositories.*;
 import com.synectiks.security.util.IUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -25,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 
 import javax.servlet.http.HttpServletRequest;
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Manoj
@@ -38,6 +35,12 @@ public class PolicyController implements IApiController {
 
 	@Autowired
 	private PolicyRepository repository;
+
+    @Autowired
+    private PermissionCategoryRepository permissionCategoryRepository;
+
+    @Autowired
+    private PermissionRepository permissionRepository;
 
     @Autowired
     private UserRepository userRepository;
@@ -81,9 +84,18 @@ public class PolicyController implements IApiController {
             entity.setOrganization(user.getOrganization());
             entity = repository.save(entity);
             // iterate assigned permission array and set policy in each object and save
-            for(PolicyAssignedPermissions policyAssignedPermissions : assignedPermissions){
-                policyAssignedPermissions.setPolicyId(entity.getId());
-                policyAssignedPermissions = policyAssignedPermissionsRepository.save(policyAssignedPermissions);
+            for(PolicyAssignedPermissions obj : assignedPermissions){
+                obj.setPolicyId(entity.getId());
+                obj.setPolicyName(entity.getName());
+                Optional<PermissionCategory> opc = permissionCategoryRepository.findById(obj.getPermissionCategoryId());
+                if(opc.isPresent()){
+                    obj.setPermissionCategoryName(opc.get().getName());
+                }
+                Optional<Permission> op = permissionRepository.findById(obj.getPermissionId());
+                if(op.isPresent()){
+                    obj.setPermissionName(op.get().getName());
+                }
+                obj = policyAssignedPermissionsRepository.save(obj);
             }
             // keep saved assigned permission references in an array
             // assign this array in policy
@@ -93,8 +105,8 @@ public class PolicyController implements IApiController {
 
 		} catch (Throwable th) {
 //			th.printStackTrace();
-			logger.error(th.getMessage(), th);
-			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(th);
+			logger.error(th.getMessage(), th.getStackTrace());
+			return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(th.getMessage());
 		}
 		return ResponseEntity.status(HttpStatus.CREATED).body(entity);
 	}
