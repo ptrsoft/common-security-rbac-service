@@ -6,6 +6,8 @@ import java.util.Set;
 import javax.persistence.*;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.domain.PSqlEntity;
@@ -31,27 +33,23 @@ public class Role extends PSqlEntity {
     @ColumnDefault(value = "false")
     private boolean isDefault;
 
-    public boolean isDefault() {
-        return isDefault;
-    }
-
-    public void setDefault(boolean aDefault) {
-        isDefault = aDefault;
-    }
-
     @OneToOne(targetEntity = Organization.class, fetch = FetchType.EAGER)
     @JsonIgnoreProperties(value = "organizations", allowSetters = true)
     private Organization organization;
 
     @Column(nullable = true)
 	private String description;
-//	@ManyToMany(targetEntity = Permission.class, fetch = FetchType.EAGER)
-//	private List<Permission> permissions;
-	@ManyToMany(targetEntity = Role.class, fetch = FetchType.EAGER)
+
+    @ManyToMany(targetEntity = Role.class, fetch = FetchType.EAGER)
 	private Set<Role> roles;
 
     @ManyToMany(targetEntity = Policy.class, fetch = FetchType.LAZY)
     private List<Policy> policies;
+
+    @Transient
+    @JsonProperty
+    private List<ObjectNode> users;
+
 
     public List<Policy> getPolicies() {
         return policies;
@@ -85,13 +83,6 @@ public class Role extends PSqlEntity {
 		this.description = description;
 	}
 
-//	public List<Permission> getPermissions() {
-//		return permissions;
-//	}
-//
-//	public void setPermissions(List<Permission> permissions) {
-//		this.permissions = permissions;
-//	}
 
 	public Set<Role> getRoles() {
 		return roles;
@@ -101,10 +92,6 @@ public class Role extends PSqlEntity {
 		this.roles = roles;
 	}
 
-	/**
-	 * Method to check if role is a group of roles
-	 * @return
-	 */
 	public boolean isGrp() {
 		return grp;
 	}
@@ -113,12 +100,28 @@ public class Role extends PSqlEntity {
 		this.grp = grp;
 	}
 
+    public boolean isDefault() {
+        return isDefault;
+    }
+
+    public void setDefault(boolean aDefault) {
+        isDefault = aDefault;
+    }
+
     public Organization getOrganization() {
         return organization;
     }
 
     public void setOrganization(Organization organization) {
         this.organization = organization;
+    }
+
+    public List<ObjectNode> getUsers() {
+        return users;
+    }
+
+    public void setUsers(List<ObjectNode> users) {
+        this.users = users;
     }
 
 	@Override

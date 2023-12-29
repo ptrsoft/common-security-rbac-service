@@ -18,9 +18,9 @@ import com.synectiks.security.service.DocumentService;
 import com.synectiks.security.util.*;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import org.apache.commons.lang3.StringUtils;
-import org.apache.http.client.protocol.ResponseContentEncoding;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.*;
+import org.apache.shiro.authc.AuthenticationInfo;
+import org.apache.shiro.authc.UsernamePasswordToken;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1329,9 +1329,6 @@ public class UserController implements IApiController {
         List<Policy> policyList = new ArrayList<>();
         List<PermissionCategory> permissionCategoryList = new ArrayList<>();
         boolean isAdmin = false;
-//        if(Constants.USER_TYPE_SUPER_ADMIN.equalsIgnoreCase(user.getType()) || Constants.USER_TYPE_ADMIN.equalsIgnoreCase(user.getType())){
-//            isAdmin = true;
-//        }
         for(Role role: user.getRoles()){
             if(Constants.USER_TYPE_SUPER_ADMIN.equalsIgnoreCase(role.getName()) && role.isDefault() && role.isGrp()){
                 isAdmin = true;
@@ -1340,7 +1337,6 @@ public class UserController implements IApiController {
         }
         if(isAdmin){
             logger.info("User type is {}", user.getType());
-
             roleGrpList.addAll(roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, true));
             roleList.addAll(roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, false));
 
@@ -1354,6 +1350,48 @@ public class UserController implements IApiController {
 
             permissionCategoryList.addAll(permissionCategoryRepository.findByCreatedBy(Constants.SYSTEM_ACCOUNT));
             permissionCategoryList.addAll(permissionCategoryRepository.findByOrganizationId(user.getOrganization().getId()));
+
+            Map<Long, List<Role>> userRolesMap = new HashMap<>();
+            Map<Long, User> userMap = new HashMap<>();
+
+            for(User user1: userList){
+                for(Role roleGrp: user1.getRoles()){
+                    if(!userRolesMap.containsKey(user1.getId())){
+                        List<Role> temp = new ArrayList<>();
+                        temp.add(roleGrp);
+                        userRolesMap.put(user1.getId(), temp);
+                    }else {
+                        userRolesMap.get(user1.getId()).add(roleGrp);
+                    }
+                }
+               userMap.put(user1.getId(), user1);
+            }
+
+            for(Long key: userRolesMap.keySet()){
+                List<Role> values = userRolesMap.get(key);
+                for(Role tempRole: values){
+                    if(tempRole.getUsers() == null){
+                        List<ObjectNode> tempList = new ArrayList<>();
+                        ObjectNode node = IUtils.OBJECT_MAPPER.createObjectNode();
+                        node.put("id", userMap.get(key).getId());
+                        node.put("username", userMap.get(key).getUsername());
+                        tempList.add(node);
+                        tempRole.setUsers(tempList);
+                    }else {
+                        ObjectNode node = IUtils.OBJECT_MAPPER.createObjectNode();
+                        node.put("id", userMap.get(key).getId());
+                        node.put("username", userMap.get(key).getUsername());
+                        tempRole.getUsers().add(node);
+                    }
+                }
+                for(Role tempRole: values){
+                    for(Role grp: roleGrpList){
+                        if(tempRole.getId().compareTo(grp.getId()) == 0){
+                            grp.setUsers(tempRole.getUsers());
+                        }
+                    }
+                }
+            }
 
         }else {
             logger.info("User role is not admin");
