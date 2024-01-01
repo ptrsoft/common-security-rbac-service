@@ -19,8 +19,7 @@ import com.synectiks.security.util.*;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.authc.AuthenticationInfo;
-import org.apache.shiro.authc.UsernamePasswordToken;
+import org.apache.shiro.authc.*;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -1143,8 +1142,8 @@ public class UserController implements IApiController {
     }
 
 
-    @RequestMapping(value = "/reset-password")
-    public ResponseEntity<Object> resetPassword(@RequestBody ObjectNode reqObje) throws IOException {
+    @RequestMapping(value = "/reset-password-by-otp")
+    public ResponseEntity<Object> resetPasswordByOtp(@RequestBody ObjectNode reqObje) throws IOException {
         String userName = reqObje.get("userName").asText();
         User user = this.userRepository.findByUsername(userName);
         if (user == null) {
@@ -1165,40 +1164,56 @@ public class UserController implements IApiController {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
         }
 
-//        String oldPassword = reqObje.get("oldPassword").asText();
-//
-//        UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken();
-//        usernamePasswordToken.setUsername(user.getUsername());
-//        usernamePasswordToken.setPassword(oldPassword.toCharArray());
-//
-//        try{
-//            AuthenticationInfo info = SecurityUtils.getSecurityManager().authenticate(usernamePasswordToken);
-//        } catch (UnknownAccountException th) {
-//            Token.remove(userName);
-//            logger.error(th.getMessage(), th);
-//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","UnknownAccountException: ", th);
-//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-//        } catch (IncorrectCredentialsException th) {
-//            Token.remove(userName);
-//            logger.error(th.getMessage(), th);
-//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","IncorrectCredentialsException: ", th);
-//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-//        } catch (LockedAccountException th) {
-//            Token.remove(userName);
-//            logger.error(th.getMessage(), th);
-//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","LockedAccountException: ", th);
-//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-//        } catch (AuthenticationException th) {
-//            Token.remove(userName);
-//            logger.error(th.getMessage(), th);
-//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","AuthenticationException: ", th);
-//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-//        }
-
         String newPassword = reqObje.get("newPassword").asText();
         user.setPassword(shiroPasswordService.encryptPassword(newPassword));
         userRepository.save(user);
         Token.remove(userName);
+        Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Password changed successfully: ", null);
+        return ResponseEntity.status(HttpStatus.OK).body(st);
+    }
+
+    @RequestMapping(value = "/reset-password")
+    public ResponseEntity<Object> resetPassword(@RequestBody ObjectNode reqObje) throws IOException {
+        String userName = reqObje.get("userName").asText();
+        User user = this.userRepository.findByUsername(userName);
+        if (user == null) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found. User Name: "+userName, null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        String oldPassword = reqObje.get("oldPassword").asText();
+
+        UsernamePasswordToken usernamePasswordToken = new UsernamePasswordToken();
+        usernamePasswordToken.setUsername(user.getUsername());
+        usernamePasswordToken.setPassword(oldPassword.toCharArray());
+
+        try{
+            SecurityUtils.getSecurityManager().authenticate(usernamePasswordToken);
+        } catch (UnknownAccountException th) {
+            Token.remove(userName);
+            logger.error(th.getMessage(), th);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","UnknownAccountException: ", th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        } catch (IncorrectCredentialsException th) {
+            Token.remove(userName);
+            logger.error(th.getMessage(), th);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","IncorrectCredentialsException: ", th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        } catch (LockedAccountException th) {
+            Token.remove(userName);
+            logger.error(th.getMessage(), th);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","LockedAccountException: ", th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        } catch (AuthenticationException th) {
+            Token.remove(userName);
+            logger.error(th.getMessage(), th);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","AuthenticationException: ", th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+
+        String newPassword = reqObje.get("newPassword").asText();
+        user.setPassword(shiroPasswordService.encryptPassword(newPassword));
+        user.setEncPassword((EncryptionDecription.encrypt(newPassword)));
+        userRepository.save(user);
         Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Password changed successfully: ", null);
         return ResponseEntity.status(HttpStatus.OK).body(st);
     }
@@ -1351,48 +1366,9 @@ public class UserController implements IApiController {
             permissionCategoryList.addAll(permissionCategoryRepository.findByCreatedBy(Constants.SYSTEM_ACCOUNT));
             permissionCategoryList.addAll(permissionCategoryRepository.findByOrganizationId(user.getOrganization().getId()));
 
-            Map<Long, List<Role>> userRolesMap = new HashMap<>();
-            Map<Long, User> userMap = new HashMap<>();
+            addUsersToRoleGroup(roleGrpList, userList);
 
-            for(User user1: userList){
-                for(Role roleGrp: user1.getRoles()){
-                    if(!userRolesMap.containsKey(user1.getId())){
-                        List<Role> temp = new ArrayList<>();
-                        temp.add(roleGrp);
-                        userRolesMap.put(user1.getId(), temp);
-                    }else {
-                        userRolesMap.get(user1.getId()).add(roleGrp);
-                    }
-                }
-               userMap.put(user1.getId(), user1);
-            }
-
-            for(Long key: userRolesMap.keySet()){
-                List<Role> values = userRolesMap.get(key);
-                for(Role tempRole: values){
-                    if(tempRole.getUsers() == null){
-                        List<ObjectNode> tempList = new ArrayList<>();
-                        ObjectNode node = IUtils.OBJECT_MAPPER.createObjectNode();
-                        node.put("id", userMap.get(key).getId());
-                        node.put("username", userMap.get(key).getUsername());
-                        tempList.add(node);
-                        tempRole.setUsers(tempList);
-                    }else {
-                        ObjectNode node = IUtils.OBJECT_MAPPER.createObjectNode();
-                        node.put("id", userMap.get(key).getId());
-                        node.put("username", userMap.get(key).getUsername());
-                        tempRole.getUsers().add(node);
-                    }
-                }
-                for(Role tempRole: values){
-                    for(Role grp: roleGrpList){
-                        if(tempRole.getId().compareTo(grp.getId()) == 0){
-                            grp.setUsers(tempRole.getUsers());
-                        }
-                    }
-                }
-            }
-
+            addAllowedAndDisAllowedPermissions(roleGrpList);
         }else {
             logger.info("User role is not admin");
             Map<Long, PermissionCategory> pMap = new HashMap<>();
@@ -1424,5 +1400,85 @@ public class UserController implements IApiController {
         userData.put("users",userList);
         userData.put("permissionCategories",permissionCategoryList);
         return ResponseEntity.status(HttpStatus.OK).body(userData);
+    }
+
+    private void addAllowedAndDisAllowedPermissions(List<Role> roleGrpList) {
+        Map<Long, Permission> allPermissions = new HashMap<>();
+
+        Permission permission = new Permission();
+        permission.setStatus(Constants.ACTIVE);
+        List<Permission> permissionList = permissionRepository.findAll(Example.of(permission));
+        for(Permission obj: permissionList){
+            allPermissions.put(obj.getId(), obj);
+        }
+
+        // get role-group->role->policy-permission
+        for(Role roleGrp: roleGrpList){
+            Map<Long, Permission> allowedPermissions = new HashMap<>();
+            // union all the permission from each role
+            for(Role role: roleGrp.getRoles()){
+                for(Policy policy: role.getPolicies()){
+                    for(PolicyAssignedPermissions pap: policy.getPermissions()){
+                        Optional<Permission> op = permissionRepository.findById(pap.getPermissionId());
+                        if(op.isPresent()){
+                            allowedPermissions.put(pap.getPermissionId(), op.get());
+                        }
+                    }
+                }
+            }
+            roleGrp.setAllowedPermissions(allowedPermissions.keySet().stream().map(key -> allowedPermissions.get(key)).collect(Collectors.toList()));
+            for(Long key: allowedPermissions.keySet()){
+                if(allPermissions.containsKey(key)){
+                    allPermissions.remove(key);
+                }
+            }
+            roleGrp.setDisAllowedPermissions(allPermissions.keySet().stream().map(key -> allPermissions.get(key)).collect(Collectors.toList()));
+            for(Permission obj: permissionList){
+                allPermissions.put(obj.getId(), obj);
+            }
+        }
+    }
+
+    private void addUsersToRoleGroup(List<Role> roleGrpList, List<User> userList) {
+        Map<Long, List<Role>> userRolesMap = new HashMap<>();
+        Map<Long, User> userMap = new HashMap<>();
+
+        for(User user1: userList){
+            for(Role roleGrp: user1.getRoles()){
+                if(!userRolesMap.containsKey(user1.getId())){
+                    List<Role> temp = new ArrayList<>();
+                    temp.add(roleGrp);
+                    userRolesMap.put(user1.getId(), temp);
+                }else {
+                    userRolesMap.get(user1.getId()).add(roleGrp);
+                }
+            }
+           userMap.put(user1.getId(), user1);
+        }
+
+        for(Long key: userRolesMap.keySet()){
+            List<Role> values = userRolesMap.get(key);
+            for(Role tempRole: values){
+                ObjectNode node = IUtils.OBJECT_MAPPER.createObjectNode();
+                node.put("id", userMap.get(key).getId());
+                node.put("userName", userMap.get(key).getUsername());
+                node.put("eMail", userMap.get(key).getEmail());
+                node.put("numberOfGroups", values.size());
+                if(tempRole.getUsers() == null){
+                    List<ObjectNode> tempList = new ArrayList<>();
+                    tempList.add(node);
+                    tempRole.setUsers(tempList);
+                }else {
+                    tempRole.getUsers().add(node);
+                }
+            }
+            for(Role tempRole: values){
+                for(Role grp: roleGrpList){
+                    if(tempRole.getId().compareTo(grp.getId()) == 0){
+                        grp.setUsers(tempRole.getUsers());
+                    }
+                }
+            }
+        }
     }
 }

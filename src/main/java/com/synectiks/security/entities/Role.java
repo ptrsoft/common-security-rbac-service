@@ -50,6 +50,13 @@ public class Role extends PSqlEntity {
     @JsonProperty
     private List<ObjectNode> users;
 
+    @Transient
+    @JsonProperty
+    private List<Permission> disAllowedPermissions;
+
+    @Transient
+    @JsonProperty
+    private List<Permission> allowedPermissions;
 
     public List<Policy> getPolicies() {
         return policies;
@@ -124,7 +131,23 @@ public class Role extends PSqlEntity {
         this.users = users;
     }
 
-	@Override
+    public List<Permission> getDisAllowedPermissions() {
+        return disAllowedPermissions;
+    }
+
+    public void setDisAllowedPermissions(List<Permission> disAllowedPermissions) {
+        this.disAllowedPermissions = disAllowedPermissions;
+    }
+
+    public List<Permission> getAllowedPermissions() {
+        return allowedPermissions;
+    }
+
+    public void setAllowedPermissions(List<Permission> allowedPermissions) {
+        this.allowedPermissions = allowedPermissions;
+    }
+
+    @Override
 	public String toString() {
 		return "{" + (version != null ? "\"version\": \"" + version + "\", " : "")
 				+ (name != null ? "\"name\": \"" + name + "\", " : "")
