@@ -27,6 +27,6 @@ public interface IDBConsts {
 	String Tbl_Rule = "Rule";
 
 	String Col_ID = "id";
-
+    String Tbl_EmailQueue = "EmailQueue";
 
 }
