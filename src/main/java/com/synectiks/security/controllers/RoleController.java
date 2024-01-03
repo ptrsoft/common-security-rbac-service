@@ -3,16 +3,19 @@
  */
 package com.synectiks.security.controllers;
 
-import java.util.*;
-import java.util.stream.Collectors;
-
-import javax.servlet.http.HttpServletRequest;
-
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.Constants;
+import com.synectiks.security.config.IConsts;
+import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.entities.*;
+import com.synectiks.security.interfaces.IApiController;
+import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.PermissionRepository;
+import com.synectiks.security.repositories.RoleRepository;
 import com.synectiks.security.repositories.UserRepository;
+import com.synectiks.security.util.IUtils;
+import com.synectiks.security.web.rest.errors.BadRequestAlertException;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,12 +25,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.synectiks.security.config.IConsts;
-import com.synectiks.security.config.IDBConsts;
-import com.synectiks.security.interfaces.IApiController;
-import com.synectiks.security.repositories.RoleRepository;
-import com.synectiks.security.util.IUtils;
+import javax.servlet.http.HttpServletRequest;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Rajesh
@@ -49,7 +49,11 @@ public class RoleController implements IApiController {
     @Autowired
     private PermissionRepository permissionRepository;
 
-	@Override
+    @Autowired
+    private OrganizationRepository organizationRepository;
+
+
+    @Override
 	@RequestMapping(path = IConsts.API_FIND_ALL, method = RequestMethod.GET)
 	public ResponseEntity<Object> findAll(HttpServletRequest request) {
 		List<Role> entities = null;
@@ -279,16 +283,60 @@ public class RoleController implements IApiController {
 	@RequestMapping(IConsts.API_UPDATE)
 	public ResponseEntity<Object> update(@RequestBody ObjectNode entity,
 			HttpServletRequest request) {
-		Role service = null;
+        logger.info("Request to update role");
+		Role temp = null;
 		try {
 			String user = IUtils.getUserFromRequest(request);
-			service = IUtils.createEntity(entity, user, Role.class);
-			repository.save(service);
+			Role service = IUtils.createEntity(entity, user, Role.class);
+            if(service.getId() == null){
+                logger.error("Unique identifier id not provided");
+                throw new BadRequestAlertException(String.format("Null id", "role"), "role", "idnull");
+            }
+            if (!repository.existsById(service.getId())) {
+                logger.error("Role with the given id not found. Given role id: {} ", service.getId());
+                throw new BadRequestAlertException("Entity not found", "role", "idnotfound");
+            }
+            Role existingRole = repository.findById(service.getId()).get();
+
+            existingRole.setUpdatedAt(new Date());
+            if(!StringUtils.isBlank(service.getUpdatedBy())){
+                existingRole.setUpdatedBy(service.getUpdatedBy());
+            }
+            if(!StringUtils.isBlank(service.getDescription())){
+                existingRole.setDescription(service.getDescription());
+            }
+            if(service.isGrp()){
+                existingRole.setGrp(service.isGrp());
+            }
+            if(service.isDefault()){
+                existingRole.setDefault(service.isDefault());
+            }
+            if(!StringUtils.isBlank(service.getName())){
+                existingRole.setName(service.getName());
+            }
+            if(service.getVersion() != null){
+                existingRole.setVersion(service.getVersion());
+            }
+            if(service.getOrganization() != null){
+                if(service.getOrganization().getId() == null){
+                    logger.error("Unique identifier id not provided in organization");
+                    throw new BadRequestAlertException(String.format("Null id", "organization"), "organization", "idnull");
+                }
+                Organization organization = organizationRepository.findById(service.getOrganization().getId()).get();
+                existingRole.setOrganization(organization);
+            }
+            if(service.getRoles() != null){
+                existingRole.setRoles(service.getRoles());
+            }
+            if(service.getPolicies() != null){
+                existingRole.setPolicies(service.getPolicies());
+            }
+            temp = repository.save(existingRole);
 		} catch (Throwable th) {
 			logger.error(th.getMessage(), th);
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
 		}
-		return ResponseEntity.status(HttpStatus.OK).body(service);
+		return ResponseEntity.status(HttpStatus.OK).body(temp);
 	}
 
 	@Override
