@@ -3,7 +3,6 @@
  */
 package com.synectiks.security.controllers;
 
-import com.amazonaws.services.simpleemail.model.SendEmailResult;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.Constants;
 import com.synectiks.security.config.IConsts;
@@ -60,6 +59,9 @@ public class UserController implements IApiController {
 
 	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
+    @Value("${synectiks.aws.mail.sender}")
+    private String awsSenderMail;
+
 	@Value("${synectiks.cmdb.organization.url}")
 	private String cmdbOrgUrl;
 	private DefaultPasswordService shiroPasswordService = new DefaultPasswordService();
@@ -99,6 +101,9 @@ public class UserController implements IApiController {
 
     @Autowired
     private AwsEmailService awsEmailService;
+
+//    @Autowired
+//    private EmailQueueRepository emailQueueRepository;
 
 	@Override
 	@RequestMapping(path = IConsts.API_FIND_ALL, method = RequestMethod.GET)
@@ -271,11 +276,30 @@ public class UserController implements IApiController {
 //            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(st);
 		}
         if(!StringUtils.isBlank(email)){
-            logger.info("Sending mail");
-            SendEmailResult status = awsEmailService.sendNewUserMail(user);
+            logger.info("Pushing new user mail to queue");
+//            SendEmailResult status = awsEmailService.sendNewUserMail(user);
+//            setNewUserMailToQueue(email, user);
         }
 		return ResponseEntity.status(HttpStatus.CREATED).body(user);
 	}
+
+//    private void setNewUserMailToQueue(String email, User user) {
+//        EmailQueue emailQueue = new EmailQueue();
+//        String ownerName = user.getOwner() != null ? user.getOwner().getUsername() : "AppKube";
+//        emailQueue.setCreatedAt(user.getCreatedAt());
+//        emailQueue.setCreatedBy(user.getCreatedBy());
+//        emailQueue.setStatus(Constants.STATUS_PENDING);
+//        emailQueue.setMailTo(email);
+//        emailQueue.setMailFrom(awsSenderMail);
+//        emailQueue.setMailType(Constants.TYPE_NEW_USER);
+//        emailQueue.setMailSubject(Constants.MAIL_SUBJECT_NEW_APPKUBE_ACCOUNT_CREATED);
+//        String msg = Constants.MAIL_BODY_NEW_APPKUBE_ACCOUNT_CREATED
+//            .replaceAll("##USERNAME##", user.getUsername())
+//            .replaceAll("##PASSWORD##",EncryptionDecription.decrypt(user.getEncPassword()))
+//            .replaceAll("##OWNERNAME##",ownerName);
+//        emailQueue.setMailBody(msg);
+//        emailQueueRepository.save(emailQueue);
+//    }
 
     @RequestMapping(IConsts.API_CREATE+"/new-org-user")
     public ResponseEntity<Object> createNewOrgUser(@RequestParam(name = "organization", required = true) String organization,
@@ -1166,6 +1190,10 @@ public class UserController implements IApiController {
 
         String newPassword = reqObje.get("newPassword").asText();
         user.setPassword(shiroPasswordService.encryptPassword(newPassword));
+        user.setEncPassword((EncryptionDecription.encrypt(newPassword)));
+        user.setUpdatedBy(user.getUsername());
+        user.setUpdatedAt(new Date());
+
         userRepository.save(user);
         Token.remove(userName);
         Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Password changed successfully: ", null);
@@ -1209,10 +1237,36 @@ public class UserController implements IApiController {
             Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","AuthenticationException: ", th);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
         }
+        user.setUpdatedBy(user.getUsername());
+        user.setUpdatedAt(new Date());
 
         String newPassword = reqObje.get("newPassword").asText();
         user.setPassword(shiroPasswordService.encryptPassword(newPassword));
         user.setEncPassword((EncryptionDecription.encrypt(newPassword)));
+        userRepository.save(user);
+        Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Password changed successfully: ", null);
+        return ResponseEntity.status(HttpStatus.OK).body(st);
+    }
+
+    @RequestMapping(value = "/reset-password-by-admin")
+    public ResponseEntity<Object> resetPasswordByAdmin(@RequestBody ObjectNode reqObje) throws IOException {
+        String userName = reqObje.get("userName").asText();
+        User user = this.userRepository.findByUsername(userName);
+        if (user == null) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User not found. User Name: "+userName, null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        Optional<User> oOwner = this.userRepository.findById(reqObje.get("ownerId").asLong());
+        if(!oOwner.isPresent()){
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Owner not found. Owner id: "+reqObje.get("ownerId").asLong(), null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        user.setUpdatedBy(oOwner.get().getUsername());
+        user.setUpdatedAt(new Date());
+        String newPassword = reqObje.get("newPassword").asText();
+        user.setPassword(shiroPasswordService.encryptPassword(newPassword));
+        user.setEncPassword((EncryptionDecription.encrypt(newPassword)));
+
         userRepository.save(user);
         Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","Password changed successfully: ", null);
         return ResponseEntity.status(HttpStatus.OK).body(st);
