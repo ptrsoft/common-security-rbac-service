@@ -191,6 +191,9 @@ public class UserController implements IApiController {
                                          @RequestParam(name = "targetService", required = false) String targetService,
                                          @RequestParam(name = "roleId", required = false) String roleId,
                                          @RequestParam(name = "errorOnOrgFound", required = true) boolean errorOnOrgFound,
+                                         @RequestParam(name = "firstName", required = false) String firstName,
+                                         @RequestParam(name = "middleName", required = false) String middleName,
+                                         @RequestParam(name = "lastName", required = false) String lastName,
                                          @RequestParam(name = "file", required = false) MultipartFile file,
                                          HttpServletRequest request) {
         logger.info("Request to create new user. user name: {}",username);
@@ -213,7 +216,15 @@ public class UserController implements IApiController {
 
         user = new User();
         createUser(user, type, username, password, email, ownerId);
-
+        if(!StringUtils.isBlank(firstName)){
+            user.setFirstName(firstName);
+        }
+        if(!StringUtils.isBlank(middleName)){
+            user.setMiddleName(middleName);
+        }
+        if(!StringUtils.isBlank(lastName)){
+            user.setLastName(lastName);
+        }
         if (!StringUtils.isBlank(organization)) {
             List<Organization> organizationList = this.organizationRepository.findAll();
             List<Organization> existingOrg = new ArrayList<>();

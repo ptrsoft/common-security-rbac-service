@@ -88,7 +88,6 @@ public class User extends PSqlEntity {
     @Column(nullable = true)
     private Integer loginCount;
 
-
     @Column(nullable = true)
     private Date lastLoginAt;
 
@@ -116,11 +115,20 @@ public class User extends PSqlEntity {
     @JsonProperty
 	private boolean isAuthenticatedByUserName = false;
 
+    @Column(nullable = true)
+    private String firstName;
+
+    @Column(nullable = true)
+    private String middleName;
+
+    @Column(nullable = true)
+    private String lastName;
+
 	public User() {
 		super();
 	}
 
-	public User(String username) {
+    public User(String username) {
 		this();
 		this.setUsername(username);
 	}
@@ -347,5 +355,27 @@ public class User extends PSqlEntity {
         this.lastLoginAt = lastLoginAt;
     }
 
+    public String getFirstName() {
+        return firstName;
+    }
 
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
+
+    public String getMiddleName() {
+        return middleName;
+    }
+
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
+
+    public String getLastName() {
+        return lastName;
+    }
+
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
 }
