@@ -3,12 +3,9 @@
  */
 package com.synectiks.security.controllers;
 
-import com.amazonaws.services.simpleemail.model.SendEmailResult;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.Constants;
-import com.synectiks.security.email.AwsEmailService;
-import com.synectiks.security.entities.Document;
-import com.synectiks.security.entities.Status;
+import com.synectiks.security.service.AppkubeAwsEmailService;
 import com.synectiks.security.entities.User;
 import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.mfa.GoogleMultiFactorAuthenticationService;
@@ -16,7 +13,6 @@ import com.synectiks.security.models.AuthInfo;
 import com.synectiks.security.models.LoginRequest;
 import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.UserRepository;
-import com.synectiks.security.service.DocumentService;
 import com.synectiks.security.util.IUtils;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,7 +28,6 @@ import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
@@ -41,8 +36,6 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.*;
 
 /**
@@ -66,14 +59,14 @@ public class SecurityController {
 
 	@Autowired
 	GoogleMultiFactorAuthenticationService googleMultiFactorAuthenticationService;
-	@Autowired
-	private DocumentService documentService;
+//	@Autowired
+//	private DocumentService documentService;
 
     @Autowired
     private DefaultWebSecurityManager defaultWebSecurityManager;
 
     @Autowired
-    private AwsEmailService awsEmailService;
+    private AppkubeAwsEmailService appkubeAwsEmailService;
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
 	public ResponseEntity<Object> login(@RequestParam  String username, @RequestParam String password,
@@ -85,35 +78,35 @@ public class SecurityController {
 
 		return authenticate(token);
 	}
-	private void getDocumentList(User usr) {
-		Map<String, String> requestObj = new HashMap<>();
-		requestObj.put("sourceId", String.valueOf(usr.getId()));
-		List<Document> docList = documentService.searchDocument(requestObj);
-		List<Document> finalDocList = new ArrayList<>();
-		for (Document doc : docList) {
-			if (!doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
-				finalDocList.add(doc);
-			}
-		}
-		usr.setDocumentList(finalDocList);
-
-	}
-	private void setProfileImage(User usr) throws IOException {
-		Map<String, String> requestObj = new HashMap<>();
-		requestObj.put("sourceId", String.valueOf(usr.getId()));
-		List<Document> docList = documentService.searchDocument(requestObj);
-		for (Document doc : docList) {
-			if (doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
-				if (doc.getLocalFilePath() != null) {
-					byte[] bytes = Files.readAllBytes(Paths.get(doc.getLocalFilePath()));
-					usr.setProfileImage(bytes);
-				}
-				break;
-			}
-		}
-
-
-	}
+//	private void getDocumentList(User usr) {
+//		Map<String, String> requestObj = new HashMap<>();
+//		requestObj.put("sourceId", String.valueOf(usr.getId()));
+//		List<Document> docList = documentService.searchDocument(requestObj);
+//		List<Document> finalDocList = new ArrayList<>();
+//		for (Document doc : docList) {
+//			if (!doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
+//				finalDocList.add(doc);
+//			}
+//		}
+//		usr.setDocumentList(finalDocList);
+//
+//	}
+//	private void setProfileImage(User usr) throws IOException {
+//		Map<String, String> requestObj = new HashMap<>();
+//		requestObj.put("sourceId", String.valueOf(usr.getId()));
+//		List<Document> docList = documentService.searchDocument(requestObj);
+//		for (Document doc : docList) {
+//			if (doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
+//				if (doc.getLocalFilePath() != null) {
+//					byte[] bytes = Files.readAllBytes(Paths.get(doc.getLocalFilePath()));
+//					usr.setProfileImage(bytes);
+//				}
+//				break;
+//			}
+//		}
+//
+//
+//	}
 
 
 	@RequestMapping(value = "/signup")
@@ -164,8 +157,8 @@ public class SecurityController {
             if(StringUtils.isBlank(usr.getIsMfaEnable())) {
             	usr.setIsMfaEnable(Constants.NO);
             }
-            getDocumentList(usr);
-			setProfileImage(usr);
+//            getDocumentList(usr);
+//			setProfileImage(usr);
             authInfo = AuthInfo.create(info, usr, passwordService.encryptPassword(session.getId().toString()));
             res = IUtils.getStringFromValue(authInfo);
             logger.info(res);
@@ -346,7 +339,7 @@ public class SecurityController {
         if (StringUtils.isBlank(user.getEmail())) {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("User's email not found. User Name :"+userName);
         }
-        SendEmailResult status = awsEmailService.sendForgotPasswordMail(userName, user.getEmail());
+//        SendEmailResult status = awsEmailService.sendForgotPasswordMail(userName, user.getEmail());
         return ResponseEntity.status(HttpStatus.OK).body("Mail sent");
     }
 
