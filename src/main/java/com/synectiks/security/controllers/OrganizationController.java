@@ -97,6 +97,7 @@ public class OrganizationController {
             Status st = new Status(417, "organization already exists");
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
         }
+        organization.setName(organization.getName().toUpperCase());
         Organization result = organizationService.save(organization);
         logger.info("Organization created successfully");
         if(pushToCmdb){
@@ -132,7 +133,7 @@ public class OrganizationController {
         URI uri = new URI(cmdbOrgUrl);
 
         Organization org = new Organization();
-        org.setName(existingOrganization.getName());
+        org.setName(existingOrganization.getName().toUpperCase());
         org.setSecurityServiceOrgId(existingOrganization.getId());
 
         try{

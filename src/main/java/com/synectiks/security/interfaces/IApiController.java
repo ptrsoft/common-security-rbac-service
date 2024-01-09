@@ -49,6 +49,10 @@ public interface IApiController {
 	String URL_SUBSCRIPTION = "/subscription";
 	String URL_USER = "/users";
 	String URL_ORGANIZATION = "/organization";
+
+    String URL_EMAIL = "/email";
+
+    String URL_CONFIG = "/config";
 	// String URL_ = "";
 
 	/**
@@ -56,21 +60,27 @@ public interface IApiController {
 	 * @param request
 	 * @return
 	 */
-	ResponseEntity<Object> findAll(HttpServletRequest request);
+	default ResponseEntity<Object> findAll(HttpServletRequest request){
+        return null;
+    }
 
 	/**
 	 * API to load entity by id
 	 * @param id
 	 * @return
 	 */
-	ResponseEntity<Object> findById(Long id);
+	default ResponseEntity<Object> findById(Long id) {
+        return null;
+    }
 
 	/**
 	 * API to load entity by id
 	 * @param id
 	 * @return
 	 */
-	ResponseEntity<Object> deleteById(Long id);
+	default ResponseEntity<Object> deleteById(Long id) {
+        return null;
+    }
 
 	/**
 	 * Api to create a new entity
@@ -78,7 +88,9 @@ public interface IApiController {
 	 * @param request
 	 * @return
 	 */
-	ResponseEntity<Object> create(ObjectNode entity, HttpServletRequest request);
+	default ResponseEntity<Object> create(ObjectNode entity, HttpServletRequest request) {
+        return null;
+    }
 
 	/**
 	 * API to update an entity
@@ -86,14 +98,18 @@ public interface IApiController {
 	 * @param request
 	 * @return
 	 */
-	ResponseEntity<Object> update(ObjectNode entity, HttpServletRequest request);
+	default ResponseEntity<Object> update(ObjectNode entity, HttpServletRequest request) {
+        return null;
+    }
 
 	/**
 	 * API to delete and entity
 	 * @param entity
 	 * @return
 	 */
-	ResponseEntity<Object> delete(ObjectNode entity);
+	default ResponseEntity<Object> delete(ObjectNode entity){
+        return null;
+    }
 
 	/**
 	 * Method to check query parameter if its 'surveyjs' returns

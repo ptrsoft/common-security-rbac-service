@@ -29,4 +29,5 @@ public interface IDBConsts {
 	String Col_ID = "id";
     String Tbl_EmailQueue = "EmailQueue";
 
+    String Tbl_Config = "Config";
 }

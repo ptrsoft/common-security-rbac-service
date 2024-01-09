@@ -1,4 +1,4 @@
-package com.synectiks.security.email;
+package com.synectiks.security.service;
 
 import javax.mail.internet.MimeMessage;
 
@@ -15,7 +15,7 @@ import org.springframework.stereotype.Service;
 public class MailService {
 	private static final Logger logger = LoggerFactory.getLogger(MailService.class);
 	private JavaMailSender javaMailSender;
-	
+
 	@Autowired
 	public MailService(JavaMailSender javaMailSender) {
 		this.javaMailSender = javaMailSender;
@@ -28,11 +28,11 @@ public class MailService {
 	public void sendEmail(MimeMessage mail) throws MailException {
 		javaMailSender.send(mail);
 	}
-	
+
 	public JavaMailSender getJavaMailSender() {
 		return this.javaMailSender;
 	}
-	
+
 	public MimeMessage createHtmlMailMessage(String templateData, String to, String subject) {
 		logger.info("Creating mime message to send html email");
 		MimeMessage mimeMessage = getJavaMailSender().createMimeMessage();
@@ -41,14 +41,14 @@ public class MailService {
 			helper.setTo(to);
 			helper.setSubject(subject);
 			helper.setText(templateData, true);
-			
+
 		} catch (Exception e) {
 			logger.error("Exception in creating mime message ",e);
 			return null;
 		}
 		return mimeMessage;
 	}
-	
+
 	public MimeMessageHelper createHtmlMailMessageWithImage(MimeMessage mimeMessage, String templateData, String to, String subject) {
 		logger.info("Creating mime message with image to send html email");
 		MimeMessageHelper helper = null;
@@ -57,7 +57,7 @@ public class MailService {
 			helper.setTo(to);
 			helper.setSubject(subject);
 			helper.setText(templateData, true);
-			
+
 		} catch (Exception e) {
 			logger.error("Exception in creating mime message ",e);
 			return null;

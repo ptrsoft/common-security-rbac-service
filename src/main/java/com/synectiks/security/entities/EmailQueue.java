@@ -1,11 +1,10 @@
 package com.synectiks.security.entities;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.domain.PSqlEntity;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 /**
  * @author Manoj
@@ -35,6 +34,14 @@ public class EmailQueue extends PSqlEntity {
 
     @Column(name = "mail_template", nullable = true)
     private String mailTemplate;
+
+    @Column(name = "user_name", nullable = true)
+    private String userName;
+
+
+    @OneToOne(targetEntity = Organization.class, fetch = FetchType.EAGER)
+    @JsonIgnoreProperties(value = "organizations", allowSetters = true)
+    private Organization organization;
 
     public String getStatus() {
         return status;
@@ -90,6 +97,22 @@ public class EmailQueue extends PSqlEntity {
 
     public void setMailTemplate(String mailTemplate) {
         this.mailTemplate = mailTemplate;
+    }
+
+    public String getUserName() {
+        return userName;
+    }
+
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public Organization getOrganization() {
+        return organization;
+    }
+
+    public void setOrganization(Organization organization) {
+        this.organization = organization;
     }
 
     @Override

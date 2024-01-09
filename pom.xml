@@ -456,6 +456,16 @@
             <artifactId>metrics-core</artifactId>
         </dependency>
         <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>ses</artifactId>
+            <version>2.22.9</version>
+        </dependency>
+        <dependency>
+            <groupId>software.amazon.awssdk</groupId>
+            <artifactId>s3</artifactId>
+            <version>2.22.10</version>
+        </dependency>
+        <dependency>
             <groupId>com.amazonaws</groupId>
             <artifactId>aws-java-sdk</artifactId>
             <version>1.11.89</version>
@@ -969,8 +979,8 @@
                         </execution>
                     </executions>
                     <configuration>
-                        <mainClass>${start-class}</mainClass>
-                        <fork>true</fork>
+<!--                        <mainClass>${start-class}</mainClass>-->
+<!--                        <fork>true</fork>-->
                         <!--
                         Enable the line below to have remote debugging of your application on port 5005
                         <jvmArguments>-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=5005</jvmArguments>
@@ -1091,12 +1101,12 @@
                 Profile for tracing requests with Zipkin.
             -->
             <id>zipkin</id>
-            <dependencies>
-                <dependency>
-                    <groupId>org.springframework.cloud</groupId>
-                    <artifactId>spring-cloud-starter-zipkin</artifactId>
-                </dependency>
-            </dependencies>
+<!--            <dependencies>-->
+<!--                <dependency>-->
+<!--                    <groupId>org.springframework.cloud</groupId>-->
+<!--                    <artifactId>spring-cloud-starter-zipkin</artifactId>-->
+<!--                </dependency>-->
+<!--            </dependencies>-->
         </profile>
         <profile>
             <!--

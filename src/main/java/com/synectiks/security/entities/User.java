@@ -3,26 +3,14 @@
  */
 package com.synectiks.security.entities;
 
-import java.util.Arrays;
-import java.util.Date;
-import java.util.List;
-
-import javax.persistence.CascadeType;
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.FetchType;
-import javax.persistence.ManyToMany;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
-import javax.persistence.Transient;
-
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
-
-import com.synectiks.security.config.Constants;
-import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
 import com.synectiks.security.domain.PSqlEntity;
+
+import javax.persistence.*;
+import java.util.Date;
+import java.util.List;
 
 /**
  * @author Rajesh
@@ -35,8 +23,8 @@ public class User extends PSqlEntity {
 	 *
 	 */
 	private static final long serialVersionUID = 1L;
-	public static User ADMIN = create(IConsts.ADMIN, Arrays.asList(Role.ROLE_ADMIN));
-	public static String ADMIN_UUID = "7afb71b8-2db0-4fc0-b66f-47f34d10a5a3";
+//	public static User ADMIN = create(IConsts.ADMIN, Arrays.asList(Role.ROLE_ADMIN));
+//	public static String ADMIN_UUID = "7afb71b8-2db0-4fc0-b66f-47f34d10a5a3";
 
 //	public static enum Types {
 //		CUSTOMER, USER, SUPER;
@@ -103,9 +91,9 @@ public class User extends PSqlEntity {
     @JsonProperty
 	private List<User> teamList;
 
-    @Transient
-	@JsonProperty
-	private List<Document> documentList;
+//    @Transient
+//	@JsonProperty
+//	private List<Document> documentList;
 
     @Transient
 	@JsonProperty
@@ -124,14 +112,23 @@ public class User extends PSqlEntity {
     @Column(nullable = true)
     private String lastName;
 
-	public User() {
-		super();
-	}
+    @Column(nullable = true)
+    private String fileName;
 
-    public User(String username) {
-		this();
-		this.setUsername(username);
-	}
+    @Column(nullable = true)
+    private String fileStorageLocationType;
+
+    @Column(nullable = true)
+    private String fileStorageLocation;
+
+//	public User() {
+//		super();
+//	}
+//
+//    public User(String username) {
+//		this();
+//		this.setUsername(username);
+//	}
 
 	public String getUsername() {
 		return username;
@@ -181,19 +178,19 @@ public class User extends PSqlEntity {
 		this.type = type;
 	}
 
-	/**
-	 * Method to create a user object with username and roles
-	 * @param username
-	 * @param asList
-	 * @return
-	 */
-	private static User create(String username, List<Role> asList) {
-		User user = new User();
-		user.setUsername(username);
-		user.setType(Constants.USER_TYPE_ADMIN);
-		user.setRoles(asList);
-		return user;
-	}
+//	/**
+//	 * Method to create a user object with username and roles
+//	 * @param username
+//	 * @param asList
+//	 * @return
+//	 */
+//	private static User create(String username, List<Role> asList) {
+//		User user = new User();
+//		user.setUsername(username);
+//		user.setType(Constants.USER_TYPE_ADMIN);
+//		user.setRoles(asList);
+//		return user;
+//	}
 
 	@Override
 	public String toString() {
@@ -323,13 +320,13 @@ public class User extends PSqlEntity {
 		this.profileImage = profileImage;
 	}
 
-	public List<Document> getDocumentList() {
-		return documentList;
-	}
-
-	public void setDocumentList(List<Document> documentList) {
-		this.documentList = documentList;
-	}
+//	public List<Document> getDocumentList() {
+//		return documentList;
+//	}
+//
+//	public void setDocumentList(List<Document> documentList) {
+//		this.documentList = documentList;
+//	}
 
     public String getEncPassword() {
         return encPassword;
@@ -377,5 +374,29 @@ public class User extends PSqlEntity {
 
     public void setLastName(String lastName) {
         this.lastName = lastName;
+    }
+
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getFileStorageLocationType() {
+        return fileStorageLocationType;
+    }
+
+    public void setFileStorageLocationType(String fileStorageLocationType) {
+        this.fileStorageLocationType = fileStorageLocationType;
+    }
+
+    public String getFileStorageLocation() {
+        return fileStorageLocation;
+    }
+
+    public void setFileStorageLocation(String fileStorageLocation) {
+        this.fileStorageLocation = fileStorageLocation;
     }
 }

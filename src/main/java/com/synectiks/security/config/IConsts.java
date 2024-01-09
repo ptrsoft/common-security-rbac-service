@@ -61,6 +61,7 @@ public interface IConsts {
 	String API_DELETE_ID = "/delete/{id}";
 	String API_FIND_ALL = "/listAll";
 	String API_FIND_ID = "/{id}";
+    String API_FIND_KEY = "/{key}";
 
     String API_FIND_BY_OWNER = "/find-by-owner";
 

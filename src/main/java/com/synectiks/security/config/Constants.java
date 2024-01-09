@@ -28,6 +28,35 @@ public final class Constants {
     public static String HOST = null;
     public static String PORT = null;
 
+    public static String STATUS_PENDING = "PENDING";
+    public static String STATUS_FAILED = "FAILED";
+    public static String STATUS_SENT = "SENT";
+    public static String STATUS_IN_PROCESS = "IN_PROCESS";
+
+    public static String TYPE_NEW_USER = "NEW_USER";
+
+    public static String DEFAULT_ORGANIZATION = "DEFAULT";
+    public static String GLOBAL_AWS_ACCESS_KEY = "GLOBAL_AWS_ACCESS_KEY";
+    public static String GLOBAL_AWS_SECRET_KEY = "GLOBAL_AWS_SECRET_KEY";
+    public static String GLOBAL_AWS_REGION = "GLOBAL_AWS_REGION";
+    public static String GLOBAL_AWS_S3_BUCKET_NAME_FOR_USER_IMAGES = "GLOBAL_AWS_S3_BUCKET_NAME_FOR_USER_IMAGES";
+    public static String GLOBAL_AWS_S3_FOLDER_LOCATION_FOR_USER_IMAGES = "GLOBAL_AWS_S3_FOLDER_LOCATION_FOR_USER_IMAGES";
+    public static String GLOBAL_AWS_EMAIL_END_POINT = "GLOBAL_AWS_EMAIL_END_POINT";
+    public static String GLOBAL_APPKUBE_EMAIL_SENDER = "GLOBAL_APPKUBE_EMAIL_SENDER";
+    public static String MAIL_SUBJECT_NEW_APPKUBE_ACCOUNT_CREATED = "New AppKube Account Created";
+    public static String MAIL_BODY_NEW_APPKUBE_ACCOUNT_CREATED = "Dear <h3>##USERNAME##</h3>,<br>" +
+        "Welcome to AppKube. We're delighted to have you on board.<br>" +
+        "As part of the onboarding process, we are providing you with your login credentials to access AppKube services. Please keep this information secure and do not share it with anyone.<br>" +
+        "<br>" +
+        "Your login details are as follows:<br>" +
+        "Login ID: <h3>##USERNAME##</h3><br>" +
+        "Password: <h3>##PASSWORD##</h3><br>" +
+        "<br>" +
+        "You can use the below link to login<br>" +
+        "<br>" +
+        "<a href=\"https://appkube.synectiks.net\">https://appkube.synectiks.net</a> <br>" +
+        "<br>" +
+        "Best regards,<br><h3>##OWNERNAME##</h3>";
     private Constants() {
 
     }

@@ -18,6 +18,9 @@ public interface EmailQueueRepository extends JpaRepository<EmailQueue, Long>{
 	 List<EmailQueue> findByCreatedBy(String createdBy);
      List<EmailQueue> findByUpdatedBy(String updatedBy);
      List<EmailQueue> findByStatus(String status);
+    List<EmailQueue> findByStatusAndMailType(String status, String mailType);
+     List<EmailQueue> findByStatusAndOrganizationId(String status, Long organizationId);
+     List<EmailQueue> findByOrganizationId(Long organizationId);
      List<EmailQueue> findByMailSubject(String mailSubject);
      List<EmailQueue> findByMailTo(String mailTo);
      List<EmailQueue> findByMailFrom(String mailFrom);

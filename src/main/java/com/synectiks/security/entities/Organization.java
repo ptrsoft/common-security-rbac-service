@@ -1,18 +1,16 @@
 package com.synectiks.security.entities;
 
 
-import java.io.Serializable;
-import java.time.Instant;
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.synectiks.security.domain.PSqlEntity;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
 import javax.persistence.Transient;
 import javax.validation.constraints.Size;
-
-import com.fasterxml.jackson.annotation.JsonProperty;
-import com.synectiks.security.domain.PSqlEntity;
+import java.io.Serializable;
+import java.time.Instant;
 
 /**
  * A Organization.
@@ -58,10 +56,6 @@ public class Organization extends PSqlEntity implements Serializable {
     public void setCmdbOrgId(Long cmdbOrgId) {
         this.cmdbOrgId = cmdbOrgId;
     }
-
-    @Transient
-    @JsonProperty
-    private List<OrganizationalUnit> organizationalUnitList;
 
     @Transient
     @JsonProperty
@@ -137,14 +131,6 @@ public class Organization extends PSqlEntity implements Serializable {
 
 	public void setStatus(String status) {
 		this.status = status;
-	}
-
-	public List<OrganizationalUnit> getOrganizationalUnitList() {
-		return organizationalUnitList;
-	}
-
-	public void setOrganizationalUnitList(List<OrganizationalUnit> organizationalUnitList) {
-		this.organizationalUnitList = organizationalUnitList;
 	}
 
 	@Override

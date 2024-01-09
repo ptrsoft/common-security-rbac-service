@@ -7,13 +7,11 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.Constants;
 import com.synectiks.security.config.IConsts;
 import com.synectiks.security.config.IDBConsts;
-import com.synectiks.security.email.AwsEmailService;
-import com.synectiks.security.email.MailService;
 import com.synectiks.security.entities.*;
 import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.mfa.GoogleMultiFactorAuthenticationService;
 import com.synectiks.security.repositories.*;
-import com.synectiks.security.service.DocumentService;
+import com.synectiks.security.service.*;
 import com.synectiks.security.util.*;
 import com.warrenstrange.googleauth.GoogleAuthenticator;
 import org.apache.commons.lang3.StringUtils;
@@ -25,7 +23,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
-import org.springframework.dao.IncorrectResultSizeDataAccessException;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
@@ -39,13 +36,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
-import java.io.File;
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.io.*;
 import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -81,8 +73,8 @@ public class UserController implements IApiController {
     @Autowired
     private PermissionCategoryRepository permissionCategoryRepository;
 
-    @Autowired
-	private OrganizationRepository organizationRepository;
+//    @Autowired
+//	private OrganizationRepository organizationRepository;
 
 	@Autowired
 	private MailService mailService;
@@ -96,68 +88,71 @@ public class UserController implements IApiController {
 	@Autowired
 	private RestTemplate restTemplate;
 
-	@Autowired
-	private DocumentService documentService;
+//	@Autowired
+//	private DocumentService documentService;
 
     @Autowired
-    private AwsEmailService awsEmailService;
+    private AppkubeAwsEmailService appkubeAwsEmailService;
 
 //    @Autowired
 //    private EmailQueueRepository emailQueueRepository;
 
-	@Override
+    @Autowired
+    private AppkubeAwsS3Service appkubeAwsS3Service;
+
+    @Autowired
+    private ConfigService configService;
+
+    @Autowired
+    private OrganizationService organizationService;
+
+    @Autowired
+    private EmailQueueService emailQueueService;
+
+
+    @Override
 	@RequestMapping(path = IConsts.API_FIND_ALL, method = RequestMethod.GET)
-	// @RequiresRoles("ROLE_" + IConsts.ADMIN)
 	public ResponseEntity<Object> findAll(HttpServletRequest request) {
-		List<User> entities = null;
-		try {
-			entities = (List<User>) userRepository.findAll();
-			for (User by : entities) {
-				getDocumentList(by);
-				setProfileImage(by);
-			}
-		} catch (Throwable th) {
-			th.printStackTrace();
-			logger.error(th.getMessage(), th);
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
-		}
-		return ResponseEntity.status(HttpStatus.CREATED).body(entities);
+        logger.info("Request to get all the users irrespective of organization");
+		List<User> entities = userRepository.findAll();
+        for(User user: entities){
+            if(!StringUtils.isBlank(user.getFileName()) && "S3".equalsIgnoreCase(user.getFileStorageLocationType())){
+                user.setProfileImage(downloadFileFromS3(user.getFileStorageLocation(), user.getFileName()));
+            }
+        }
+		return ResponseEntity.status(HttpStatus.OK).body(entities);
 	}
 
     @RequestMapping(path = IConsts.API_FIND_BY_OWNER, method = RequestMethod.GET)
     public ResponseEntity<Object> findByOwnerId(@RequestParam(name = "ownerId", required = true) Long ownerId,
                                                 HttpServletRequest request) {
-        List<User> entities = null;
-        try {
-            entities = userRepository.findByOwnerId(ownerId);
-            for (User by : entities) {
-                getDocumentList(by);
-                setProfileImage(by);
+        logger.info("Request to get all the users of a given owner. Owner id: {}", ownerId);
+        List<User> entities = userRepository.findByOwnerId(ownerId);
+        for(User user: entities){
+            if(!StringUtils.isBlank(user.getFileName()) && "S3".equalsIgnoreCase(user.getFileStorageLocationType())){
+                user.setProfileImage(downloadFileFromS3(user.getFileStorageLocation(), user.getFileName()));
             }
-        } catch (Throwable th) {
-            logger.error(th.getMessage(), th);
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th.getStackTrace());
         }
-        return ResponseEntity.status(HttpStatus.CREATED).body(entities);
+        return ResponseEntity.status(HttpStatus.OK).body(entities);
     }
 
-	private void setProfileImage(User by) throws IOException {
-		Map<String, String> requestObj = new HashMap<>();
-		requestObj.put("sourceId", String.valueOf(by.getId()));
-		requestObj.put("identifier", Constants.IDENTIFIER_PROFILE_IMAGE);
-		List<Document> docList = documentService.searchDocument(requestObj);
-		for (Document doc : docList) {
-			if (doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
-				if (doc.getLocalFilePath() != null) {
-                    if(Files.exists(Paths.get(doc.getLocalFilePath()))){
-                        byte[] bytes = Files.readAllBytes(Paths.get(doc.getLocalFilePath()));
-                        by.setProfileImage(bytes);
-                    }
-				}
-				break;
-			}
-		}
-	}
+//	private void setProfileImage(User by) throws IOException {
+//		Map<String, String> requestObj = new HashMap<>();
+//		requestObj.put("sourceId", String.valueOf(by.getId()));
+//		requestObj.put("identifier", Constants.IDENTIFIER_PROFILE_IMAGE);
+//		List<Document> docList = documentService.searchDocument(requestObj);
+//		for (Document doc : docList) {
+//			if (doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
+//				if (doc.getLocalFilePath() != null) {
+//                    if(Files.exists(Paths.get(doc.getLocalFilePath()))){
+//                        byte[] bytes = Files.readAllBytes(Paths.get(doc.getLocalFilePath()));
+//                        by.setProfileImage(bytes);
+//                    }
+//				}
+//				break;
+//			}
+//		}
+//	}
 
     /**
      * type - SUPER_ADMIN, ADMIN, USER etc..
@@ -169,7 +164,7 @@ public class UserController implements IApiController {
      * roleId - comma separated list of role id. e.g. 1,2,3
      * errorOnOrgFound - boolean flag to allow second organization admin. true - not allow, false - allow
      * @param type
-     * @param organization
+     * @param organizationName
      * @param username
      * @param password
      * @param email
@@ -177,13 +172,16 @@ public class UserController implements IApiController {
      * @param targetService
      * @param roleId
      * @param errorOnOrgFound
+     * @param firstName
+     * @param middleName
+     * @param lastName
      * @param file
      * @param request
      * @return
      */
 	@RequestMapping(IConsts.API_CREATE)
 	public ResponseEntity<Object> create(@RequestParam(name = "type", required = false) String type,
-                                         @RequestParam(name = "organization", required = false) String organization,
+                                         @RequestParam(name = "organization", required = false) String organizationName,
                                          @RequestParam("username") String username,
                                          @RequestParam(name = "password", required = false) String password,
                                          @RequestParam(name = "email", required = false) String email,
@@ -201,49 +199,31 @@ public class UserController implements IApiController {
         User user = this.userRepository.findByUsername(username);
 		if (user != null) {
             logger.error("User name/Login id already exists. user name: {}",username);
-            Status st = setMessage(HttpStatus.valueOf(421).value(), "ERROR","Login id already exists", null);
+            Status st = setMessage(HttpStatus.valueOf(421).value(), "ERROR","User name/Login id already exist", null);
             return ResponseEntity.status(HttpStatus.valueOf(421)).body(st);
 		}
 		// check for duplicate email
-		user = new User();
-		user.setEmail(email);
-        Optional<User> oUser = this.userRepository.findOne(Example.of(user));
-		if (oUser.isPresent()) {
-            logger.error("Email already exists. email: {}",email);
-            Status st = setMessage(HttpStatus.valueOf(422).value(), "ERROR","Email already exists", null);
+		user = userRepository.findByEmail(email);
+        if(user != null){
+            logger.error("Email already registered. email: {}",email);
+            Status st = setMessage(HttpStatus.valueOf(422).value(), "ERROR","Email already registered", null);
             return ResponseEntity.status(HttpStatus.valueOf(422)).body(st);
-		}
-
+        }
         user = new User();
-        createUser(user, type, username, password, email, ownerId);
-        if(!StringUtils.isBlank(firstName)){
-            user.setFirstName(firstName);
-        }
-        if(!StringUtils.isBlank(middleName)){
-            user.setMiddleName(middleName);
-        }
-        if(!StringUtils.isBlank(lastName)){
-            user.setLastName(lastName);
-        }
-        if (!StringUtils.isBlank(organization)) {
-            List<Organization> organizationList = this.organizationRepository.findAll();
-            List<Organization> existingOrg = new ArrayList<>();
-            for(Organization orgObj: organizationList){
-                if(organization.equalsIgnoreCase(orgObj.getName())){
-                    existingOrg.add(orgObj);
-                    break;
-                }
-            }
-            if(existingOrg.size() > 0){
+        createUser(user, type, username, password, ownerId, email, firstName, middleName, lastName);
+
+        if (!StringUtils.isBlank(organizationName)) {
+            Organization existingOrg = organizationService.getOrganizationByName(organizationName);
+            if(existingOrg != null){
                 if(errorOnOrgFound){
                     Status st = setMessage(HttpStatus.valueOf(418).value(), "ERROR","Organization already exists. Please contact organization administrator to get your login credentials", null);
                     return ResponseEntity.status(HttpStatus.valueOf(418)).body(st);
                 }
-                //if no error need to be thrown, it silently add the organization to the user
-                user.setOrganization(existingOrg.get(0));
+                //if errorOnOrgFound flag is false, no need to throw error, silently add the organization to the user
+                user.setOrganization(existingOrg);
             }else{
-                logger.info("Given organization not present. Organization: "+organization);
-                saveOrUpdateOrganization(organization, user, targetService);
+                logger.info("Given organization not present. Organization: {}", organizationName);
+                saveOrUpdateOrganization(organizationName, user, targetService);
             }
         }
 
@@ -274,164 +254,151 @@ public class UserController implements IApiController {
         }
 
         logger.debug("Saving user: {}", user.getUsername());
+        try {
+            uploadProfileImageToS3(file, user);
+        } catch (Throwable th) {
+            logger.error("Exception in uploading file to aws s3: ",th);
+        }
         user = userRepository.save(user);
         logger.info("User created successfully. User id: {}",user.getId());
-		try {
-            if(file != null){
-                addProfileImage(file, user);
-            }
-            getDocumentList(user);
-		} catch (Throwable th) {
-			logger.error("Exception: ",th);
-//            Status st = setMessage(HttpStatus.INTERNAL_SERVER_ERROR.value(), "ERROR","Exception in sending mail. "+th.getMessage(), null);
-//            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(st);
-		}
+
         if(!StringUtils.isBlank(email)){
-            logger.info("Pushing new user mail to queue");
-//            SendEmailResult status = awsEmailService.sendNewUserMail(user);
-//            setNewUserMailToQueue(email, user);
+            logger.info("Pushing new user registration mail to email_queue");
+            setNewUserMailToQueue(user);
         }
 		return ResponseEntity.status(HttpStatus.CREATED).body(user);
 	}
 
-//    private void setNewUserMailToQueue(String email, User user) {
-//        EmailQueue emailQueue = new EmailQueue();
-//        String ownerName = user.getOwner() != null ? user.getOwner().getUsername() : "AppKube";
-//        emailQueue.setCreatedAt(user.getCreatedAt());
-//        emailQueue.setCreatedBy(user.getCreatedBy());
-//        emailQueue.setStatus(Constants.STATUS_PENDING);
-//        emailQueue.setMailTo(email);
-//        emailQueue.setMailFrom(awsSenderMail);
-//        emailQueue.setMailType(Constants.TYPE_NEW_USER);
-//        emailQueue.setMailSubject(Constants.MAIL_SUBJECT_NEW_APPKUBE_ACCOUNT_CREATED);
-//        String msg = Constants.MAIL_BODY_NEW_APPKUBE_ACCOUNT_CREATED
-//            .replaceAll("##USERNAME##", user.getUsername())
-//            .replaceAll("##PASSWORD##",EncryptionDecription.decrypt(user.getEncPassword()))
-//            .replaceAll("##OWNERNAME##",ownerName);
-//        emailQueue.setMailBody(msg);
-//        emailQueueRepository.save(emailQueue);
-//    }
-
-    @RequestMapping(IConsts.API_CREATE+"/new-org-user")
-    public ResponseEntity<Object> createNewOrgUser(@RequestParam(name = "organization", required = true) String organization,
-                                                   @RequestParam(name = "email", required = true) String email,
-                                                   HttpServletRequest request) {
-        User user = new User();
-        try{
-            // check if user already exists
-            logger.info("Checking user email in active users");
-            user.setEmail(email);
-            user.setActive(true);
-            Optional<User> oUser = this.userRepository.findOne(Example.of(user));
-            if (oUser.isPresent()) {
-                logger.error("Email already exists in active users");
-                Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
-                return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-            }else{
-                logger.info("Checking user email in inactive users");
-                user.setActive(false);
-                oUser = this.userRepository.findOne(Example.of(user));
-                if (oUser.isPresent()) {
-                    logger.error("Email already exists in inactive users");
-                    Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
-                    return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-                }
-            }
-        }catch (IncorrectResultSizeDataAccessException e ){
-            logger.error("Email already exists");
-            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exists", null);
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-        }
-
-        if (!StringUtils.isBlank(organization)) {
-            Organization orgObj = new Organization();
-            orgObj.setName(organization.toUpperCase());
-            Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(orgObj));
-            if (oOrg.isPresent()) {
-                user.setOrganization(oOrg.get());
-            }
-        }
-        try {
-            createUser(user, "NEW_ORG_USER_REQUEST", null, null, email, null);
-            logger.info("Saving user: " + user);
-            user.setActive(false);
-            user = userRepository.save(user);
-        } catch (Throwable th) {
-            logger.error("Exception: ",th);
-            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Service issues. User data cannot be saved", null);
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-        }
-        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+    private void setNewUserMailToQueue(User user) {
+        Organization organization = organizationService.getOrganizationByName(Constants.DEFAULT_ORGANIZATION);
+        Config configEmailFrom = configService.findByKeyAndOrganizationId(Constants.GLOBAL_APPKUBE_EMAIL_SENDER, organization.getId());
+        EmailQueue emailQueue = new EmailQueue();
+        emailQueue.setCreatedAt(user.getCreatedAt());
+        emailQueue.setCreatedBy(user.getCreatedBy());
+        emailQueue.setStatus(Constants.STATUS_PENDING);
+        emailQueue.setMailTo(user.getEmail());
+        emailQueue.setMailFrom(configEmailFrom.getValue());
+        emailQueue.setMailType(Constants.TYPE_NEW_USER);
+        emailQueue.setUserName(user.getUsername());
+        emailQueue.setOrganization(user.getOrganization());
+        emailQueueService.save(emailQueue);
     }
 
-	private void getDocumentList(User user) {
-		Map<String, String> requestObj = new HashMap<>();
-		requestObj.put("sourceId", String.valueOf(user.getId()));
-		List<Document> docList = documentService.searchDocument(requestObj);
-		List<Document> finalDocList = new ArrayList<>();
-		for (Document doc : docList) {
-			if (!doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
-				finalDocList.add(doc);
-			}
-		}
-		user.setDocumentList(finalDocList);
-	}
+//    @RequestMapping(IConsts.API_CREATE+"/new-org-user")
+//    public ResponseEntity<Object> createNewOrgUser(@RequestParam(name = "organization", required = true) String organization,
+//                                                   @RequestParam(name = "email", required = true) String email,
+//                                                   HttpServletRequest request) {
+//        // Check email already registered with any user
+//        logger.info("Checking user email already registered with any user");
+//        User user = userRepository.findByEmail(email);
+//        if(user != null){
+//            logger.error("Email already exist");
+//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exist", null);
+//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//        }
+//
+//        if (!StringUtils.isBlank(organization)) {
+//            Organization orgObj = new Organization();
+//            orgObj.setName(organization.toUpperCase());
+//            Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(orgObj));
+//            if (oOrg.isPresent()) {
+//                user.setOrganization(oOrg.get());
+//            }
+//        }
+//        try {
+//            createUser(user, "NEW_ORG_USER_REQUEST", null, null, null);
+//            logger.info("Saving user: " + user);
+//            user.setActive(false);
+//            user = userRepository.save(user);
+//        } catch (Throwable th) {
+//            logger.error("Exception: ",th);
+//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Service issues. User data cannot be saved", null);
+//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+//        }
+//        return ResponseEntity.status(HttpStatus.CREATED).body(user);
+//    }
 
-	private void addProfileImage(MultipartFile file, User user) throws IOException {
-		if (file != null) {
-			byte[] bytes = file.getBytes();
-			String orgFileName = org.springframework.util.StringUtils.cleanPath(file.getOriginalFilename());
+
+
+	private void uploadProfileImageToS3(MultipartFile multipartFile, User user) throws IOException {
+		if (multipartFile != null) {
+			String orgFileName = org.springframework.util.StringUtils.cleanPath(multipartFile.getOriginalFilename());
 			String ext = "";
 			if (orgFileName.lastIndexOf(".") != -1) {
 				ext = orgFileName.substring(orgFileName.lastIndexOf(".") + 1);
 			}
-			String filename = orgFileName;
-//			if (json.get("name") != null) {
-//				filename = json.get("name").toString();
-//			}
-			filename = filename.toLowerCase().replaceAll(" ", "-") + "_" + System.currentTimeMillis() + "." + ext;
-			File localStorage = new File(Constants.LOCAL_PROFILE_IMAGE_STORAGE_DIRECTORY);
-			if (!localStorage.exists()) {
-				localStorage.mkdirs();
-			}
-			Path path = Paths.get(localStorage.getAbsolutePath() + File.separatorChar + filename);
-			Files.write(path, bytes);
+			String filename = user.getUsername()+"."+ext;
+            Organization organization = organizationService.getOrganizationByName(Constants.DEFAULT_ORGANIZATION);
+            Config configAwsBucket = configService.findByKeyAndOrganizationId(Constants.GLOBAL_AWS_S3_BUCKET_NAME_FOR_USER_IMAGES, organization.getId());
+            Config configAwsBucketFolderLocation = configService.findByKeyAndOrganizationId(Constants.GLOBAL_AWS_S3_FOLDER_LOCATION_FOR_USER_IMAGES, organization.getId());
+            File file = new File(System.getProperty("java.io.tmpdir")+File.separatorChar+filename);
+            try (OutputStream os = new FileOutputStream(file)) {
+                os.write(multipartFile.getBytes());
+            }
+            file.deleteOnExit();
+            boolean isSuccess = appkubeAwsS3Service.uploadToS3(configAwsBucket.getValue(),configAwsBucketFolderLocation.getValue(), filename, file);
+            if(isSuccess){
+                user.setProfileImage(multipartFile.getBytes());
+                user.setFileName(filename);
+                user.setFileStorageLocationType("S3");
+                user.setFileStorageLocation(configAwsBucket.getValue());
+            }
 
-			Document document = new Document();
-			document.setFileName(filename);
-			document.setFileExt(ext);
-//			document.setFileType(Constants.FILE_TYPE_IMAGE);
-			document.setFileSize(file.getSize());
-			document.setStorageLocation(Constants.FILE_STORAGE_LOCATION_LOCAL);
-			document.setLocalFilePath(localStorage.getAbsolutePath() + File.separatorChar + filename);
-//			document.setSourceOfOrigin(this.getClass().getSimpleName());
-			document.setSourceId(user.getId().toString());
-			document.setIdentifier(Constants.IDENTIFIER_PROFILE_IMAGE);
-			document.setCreatedOn(user.getCreatedAt());
-			document.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-			document.setCreatedBy(user.getCreatedBy());
-			document.setUpdatedOn(user.getUpdatedAt());
-			document = documentService.saveDocument(document);
-			user.setProfileImage(bytes);
-			logger.debug("user profile image saved successfully");
+            file.delete();
+
+            logger.debug("user profile image saved successfully");
 		}
 	}
+
+    private byte[] downloadFileFromS3(String bucketName, String fileName){
+        if(StringUtils.isBlank(fileName)){
+            logger.warn("File name not provided. File cannot be downloaded from s3");
+            return null;
+        }
+        Organization organization = organizationService.getOrganizationByName(Constants.DEFAULT_ORGANIZATION);
+        Config configAwsBucket = configService.findByKeyAndOrganizationId(Constants.GLOBAL_AWS_S3_BUCKET_NAME_FOR_USER_IMAGES, organization.getId());
+        String bName = bucketName;
+        if(StringUtils.isBlank(bName)){
+            bName = configAwsBucket.getValue();
+        }
+        Config configAwsBucketFolderLocation = configService.findByKeyAndOrganizationId(Constants.GLOBAL_AWS_S3_FOLDER_LOCATION_FOR_USER_IMAGES, organization.getId());
+        File f = appkubeAwsS3Service.downloadFromS3(bName, configAwsBucketFolderLocation.getValue(), fileName);
+        return convertFileToByteArray(f);
+    }
+
+    public byte[] convertFileToByteArray(File file) {
+        try (FileInputStream fis = new FileInputStream(file);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                bos.write(buffer, 0, bytesRead);
+            }
+            return bos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception as needed
+            return null;
+        }
+    }
 
 	@Override
 	@RequestMapping(path = IConsts.API_FIND_ID, method = RequestMethod.GET)
 	public ResponseEntity<Object> findById(@PathVariable("id") Long id) {
-		User entity = null;
-		try {
-			entity = userRepository.findById(id).orElse(null);
-		} catch (Throwable th) {
-			logger.error(th.getMessage(), th);
-			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
-		}
-		return ResponseEntity.status(HttpStatus.CREATED).body(entity);
+        logger.info("Request to get user by id: {}", id);
+		Optional<User> oEntity = userRepository.findById(id);
+        if(!oEntity.isPresent()){
+            logger.error("User not found. user id: {}",id);
+            Status st = setMessage(HttpStatus.NOT_FOUND.value(), "ERROR","User not found. User id: "+id, null);
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(st);
+        }
+        User user = oEntity.get();
+        if(!StringUtils.isBlank(user.getFileName()) && "S3".equalsIgnoreCase(user.getFileStorageLocationType())){
+            user.setProfileImage(downloadFileFromS3(user.getFileStorageLocation(), oEntity.get().getFileName()));
+        }
+		return ResponseEntity.status(HttpStatus.OK).body(user);
 	}
-
-
-
 
 	@Override
 	@RequestMapping(IConsts.API_DELETE_ID)
@@ -442,126 +409,160 @@ public class UserController implements IApiController {
 			logger.error(th.getMessage(), th);
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
 		}
-		return ResponseEntity.status(HttpStatus.OK).body("User removed Successfully");
+		return ResponseEntity.status(HttpStatus.OK).body("User deleted Successfully");
 	}
 
-	@Override
 	@RequestMapping(IConsts.API_UPDATE)
-	public ResponseEntity<Object> update(@RequestBody ObjectNode reqObje, HttpServletRequest request) {
-		logger.debug("Request to update user" + reqObje.get("username").asText());
-		User user = new User();
-		Optional<User> oUser = null;
-		if (!StringUtils.isBlank(reqObje.get("email").asText())) {
-			user.setEmail(reqObje.get("email").asText());
-			try {
-				oUser = this.userRepository.findOne(Example.of(user));
-				if (oUser.isPresent()) {
-					if (!oUser.get().getUsername().equals(reqObje.get("username").asText())) {
-                        Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email id already exists", null);
-                        return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-					}
-				}
-			} catch (IncorrectResultSizeDataAccessException e) {
-                Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email id already exists", null);
-				return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-			}
-		}
+	public ResponseEntity<Object> update(@RequestParam(name = "id", required = true) Long id,
+                                         @RequestParam(name = "type", required = false) String type,
+                                         @RequestParam(name = "organization", required = false) String organizationName,
+                                         @RequestParam(name = "password", required = false) String password,
+                                         @RequestParam(name = "email", required = false) String email,
+                                         @RequestParam(name = "ownerId", required = false) Long ownerId,
+                                         @RequestParam(name = "roleId", required = false) String roleId,
+                                         @RequestParam(name = "firstName", required = false) String firstName,
+                                         @RequestParam(name = "middleName", required = false) String middleName,
+                                         @RequestParam(name = "lastName", required = false) String lastName,
+                                         @RequestParam(name = "file", required = false) MultipartFile file,
+                                         HttpServletRequest request) {
+		logger.debug("Request to update user. Id: {}", id );
 
-		try {
-			logger.debug("user json: " + reqObje);
-			if (oUser != null && oUser.isPresent()) {
-				user = oUser.get();
-			} else {
-				user = new User();
-				user.setUsername(reqObje.get("username").asText());
-				user = this.userRepository.findOne(Example.of(user)).orElse(null);
-			}
-			if (!StringUtils.isBlank(reqObje.get("email").asText())) {
-				user.setEmail(reqObje.get("email").asText());
-			}
+        if (!userRepository.existsById(id)) {
+            Status st = setMessage(HttpStatus.valueOf(423).value(), "ERROR","User with the given id not found. Given user id: "+id, null);
+            return ResponseEntity.status(HttpStatus.valueOf(423)).body(st);
+        }
+        if(!StringUtils.isBlank(email)){
+            User userWithMail = userRepository.findByEmail(email);
+            if(userWithMail != null && id.compareTo(userWithMail.getId()) != 0){
+                Status st = setMessage(HttpStatus.valueOf(424).value(), "ERROR","Email registered with some other user", null);
+                return ResponseEntity.status(HttpStatus.valueOf(424)).body(st);
+            }
+        }
 
-			if (!StringUtils.isBlank(reqObje.get("password").asText())) {
-				// Encrypt the password
-				user.setPassword(shiroPasswordService.encryptPassword(reqObje.get("password").asText()));
-			}
+        User existingUser = userRepository.findById(id).get();
 
-			Date currentDate = new Date();
-			saveUpdateOrganization(reqObje, user, currentDate);
-			user.setUpdatedAt(currentDate);
+        if(!StringUtils.isBlank(organizationName)){
+            Organization organization = organizationService.getOrganizationByName(organizationName);
+            if(organization == null){
+                Status st = setMessage(HttpStatus.valueOf(425).value(), "ERROR","Organization not found. Given organization name: "+organizationName, null);
+                return ResponseEntity.status(HttpStatus.valueOf(425)).body(st);
+            }
+            existingUser.setOrganization(organization);
+        }
 
-			if (reqObje.get("username") != null) {
-				user.setUpdatedBy(reqObje.get("username").asText());
-			} else {
-				user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-			}
-			logger.info("Updating user: " + user);
-			userRepository.save(user);
+        existingUser.setEmail(email);
 
-		} catch (Throwable th) {
-			logger.error(th.getMessage(), th);
-            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR",th.getMessage(), null);
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-		}
-		return ResponseEntity.status(HttpStatus.OK).body(user);
+        if(!StringUtils.isBlank(type)){
+            existingUser.setType(type);
+        }
+
+        if (!StringUtils.isBlank(password)) {
+            existingUser.setPassword(shiroPasswordService.encryptPassword(password));
+            existingUser.setEncPassword((EncryptionDecription.encrypt(password)));
+        }
+
+        if(ownerId != null){
+            Optional<User> oOwner = userRepository.findById(ownerId);
+            if(oOwner.isPresent()){
+                existingUser.setOwner(oOwner.get());
+                existingUser.setUpdatedBy(oOwner.get().getUsername());
+            }else {
+                existingUser.setUpdatedBy(existingUser.getUsername());
+            }
+        }
+
+        if(!StringUtils.isBlank(roleId)){
+            List<Role> roleList = new ArrayList<>();
+            StringTokenizer token = new StringTokenizer(roleId, ",");
+            while (token.hasMoreTokens()) {
+                Optional<Role> oRole = roleRepository.findById(Long.parseLong(token.nextToken()));
+                if (oRole.isPresent()) {
+                    logger.debug("Role found. Role name: {}, is group: {}", oRole.get().getName(), oRole.get().isGrp());
+                    roleList.add(oRole.get());
+                }
+            }
+            if(roleList.size() > 0){
+                existingUser.setRoles(roleList);
+            }
+        }
+
+        if(!StringUtils.isBlank(firstName)){
+            existingUser.setFirstName(firstName);
+        }
+        if(!StringUtils.isBlank(middleName)){
+            existingUser.setMiddleName(middleName);
+        }
+        if(!StringUtils.isBlank(lastName)){
+            existingUser.setLastName(lastName);
+        }
+
+        Date currentDate = new Date();
+        existingUser.setUpdatedAt(currentDate);
+        try {
+            uploadProfileImageToS3(file, existingUser);
+        } catch (Throwable th) {
+            logger.error("Exception in uploading file to aws s3: ",th);
+        }
+        logger.info("Updating user: ");
+        userRepository.save(existingUser);
+        Status st = setMessage(HttpStatus.OK.value(), "SUCCESS","User updated successfully", existingUser);
+        return ResponseEntity.status(HttpStatus.OK).body(st);
 	}
 
-	private void saveOrUpdateOrganization(String orgName, User user, String targetService) {
-        logger.info("Creating new organization: " + orgName);
-		if (!StringUtils.isBlank(orgName)) {
+	private void saveOrUpdateOrganization(String localOrganizationName, User user, String targetService) {
+        logger.info("Creating new organization: " + localOrganizationName);
+		if (!StringUtils.isBlank(localOrganizationName)) {
 			Organization organization = new Organization();
-			organization.setName(orgName.toUpperCase());
+			organization.setName(localOrganizationName.toUpperCase());
             organization.setCreatedAt(user.getCreatedAt());
             organization.setUpdatedAt(user.getUpdatedAt());
             organization.setCreatedBy(user.getCreatedBy());
             organization.setUpdatedBy(user.getUpdatedBy());
             organization.setStatus(Constants.ACTIVE);
-            organization = this.organizationRepository.save(organization);
+            organization = organizationService.save(organization);
 
             String url =  resolveTargetServiceUrl(targetService);
             if(!StringUtils.isBlank(url)){
                 // fetch organization from cmdb and check if exists
-                boolean isOrgFoundInCmdb = false;
+                boolean isOrgFound = false;
+                logger.info("Getting list of organization from remote service. Remote service url: {}", url);
                 ResponseEntity<List<Organization>> response = restTemplate.exchange( url, HttpMethod.GET,null, new ParameterizedTypeReference<List<Organization>>(){});
                 if(response != null && response.getBody() != null){
-                    List<Organization> organizationList = response.getBody();
-                    for(Organization org: organizationList){
-                        if(orgName.equalsIgnoreCase(org.getName())){
+                    logger.debug("Checking url response");
+                    List<Organization> remoteOrganizationList = response.getBody();
+                    for(Organization remoteOrg: remoteOrganizationList){
+                        if(localOrganizationName.equalsIgnoreCase(remoteOrg.getName())){
+                            logger.debug("Given organization found in the remote service");
                             // if exists
-                            isOrgFoundInCmdb = true;
+                            isOrgFound = true;
+                            logger.debug("Saving remote organization reference in local organization. Remote organization id: {}",remoteOrg.getId());
                             //keep cmdb reference in local organization
-                            organization.setCmdbOrgId(org.getId());
-                            organization = this.organizationRepository.save(organization);
+                            organization.setCmdbOrgId(remoteOrg.getId());
+                            organization = organizationService.save(organization);
                             user.setOrganization(organization);
+                            logger.debug("Passing local organization to remote service");
                             //update cmdb organization with local organization reference
-                            org.setSecurityServiceOrgId(organization.getId());
-                            restTemplate.patchForObject(url, org, Organization.class);
+                            remoteOrg.setSecurityServiceOrgId(organization.getId());
+                            restTemplate.patchForObject(url, remoteOrg, Organization.class);
                             break;
                         }
                     }
                 }
-                if(!isOrgFoundInCmdb){
-                    // if not exists save its reference in local organization
-//                    try{
-//                        URI uri = new URI(url);
-                    // push this new organization to cmdb
-                        Organization org = new Organization();
-                        org.setName(organization.getName());
-                        org.setSecurityServiceOrgId(organization.getId());
-                        ResponseEntity<Organization> result = restTemplate.postForEntity(url, org, Organization.class);
-                        if(result != null && result.getBody() != null){
-                            // if successfully pushed, keep cmdb reference in local organization
-                            logger.info("Organization push to CMDB. Updating CMDB id security service organization for cross reference");
-                            Organization cmdbOrg = result.getBody();
-                            organization.setCmdbOrgId(cmdbOrg.getId());
-                            organization = this.organizationRepository.save(organization);
-                            user.setOrganization(organization);
-                        }
-//                    }catch (Exception e){
-//                        logger.error("Exception while pushing organization to CMDB. ",e);
-//                        user.setOrganization(organization);
-//                    }
+                if(!isOrgFound){
+                    logger.info("Given organization not found at remote service. Adding this organization to the remote service. Remote service URL: {}", url);
+                    Organization org = new Organization();
+                    org.setName(organization.getName());
+                    org.setSecurityServiceOrgId(organization.getId());
+                    ResponseEntity<Organization> result = restTemplate.postForEntity(url, org, Organization.class);
+                    if(result != null && result.getBody() != null){
+                        // if successfully pushed, keep its reference in local organization
+                        Organization remoteOrg = result.getBody();
+                        logger.debug("Saving remote reference of remote organization in local organization. Remote organization id: {}",remoteOrg.getId());
+                        organization.setCmdbOrgId(remoteOrg.getId());
+                        organization = organizationService.save(organization);
+                        user.setOrganization(organization);
+                    }
                 }
-
             }else{
                 user.setOrganization(organization);
             }
@@ -578,35 +579,35 @@ public class UserController implements IApiController {
         return null;
     }
 
-	private void saveUpdateOrganization(ObjectNode  reqObje, User user, Date currentDate) throws URISyntaxException {
-		if (!StringUtils.isBlank(reqObje.get("organization").toString())) {
-			Organization organization = new Organization();
-			organization.setName(reqObje.get("organization").toString().toUpperCase());
-			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
-			if (oOrg.isPresent()) {
-				user.setOrganization(oOrg.get());
-			} else {
-				logger.info("Saving new organization: " + organization);
-				organization.setCreatedAt(currentDate);
-				organization.setUpdatedAt(currentDate);
-				if (reqObje.get("username") != null) {
-					organization.setCreatedBy(reqObje.get("username").toString());
-					organization.setUpdatedBy(reqObje.get("username").toString());
-				} else {
-					organization.setCreatedBy(Constants.SYSTEM_ACCOUNT);
-					organization.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-				}
-				organization = this.organizationRepository.save(organization);
-				user.setOrganization(organization);
-
-				URI uri = new URI(cmdbOrgUrl);
-				Organization org = new Organization();
-				org.setName(organization.getName());
-				org.setSecurityServiceOrgId(organization.getId());
-				ResponseEntity<Organization> result = restTemplate.postForEntity(uri, org, Organization.class);
-			}
-		}
-	}
+//	private void saveUpdateOrganization(ObjectNode  reqObje, User user, Date currentDate) throws URISyntaxException {
+//		if (!StringUtils.isBlank(reqObje.get("organization").toString())) {
+//			Organization organization = new Organization();
+//			organization.setName(reqObje.get("organization").toString().toUpperCase());
+//			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
+//			if (oOrg.isPresent()) {
+//				user.setOrganization(oOrg.get());
+//			} else {
+//				logger.info("Saving new organization: " + organization);
+//				organization.setCreatedAt(currentDate);
+//				organization.setUpdatedAt(currentDate);
+//				if (reqObje.get("username") != null) {
+//					organization.setCreatedBy(reqObje.get("username").toString());
+//					organization.setUpdatedBy(reqObje.get("username").toString());
+//				} else {
+//					organization.setCreatedBy(Constants.SYSTEM_ACCOUNT);
+//					organization.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
+//				}
+//				organization = this.organizationRepository.save(organization);
+//				user.setOrganization(organization);
+//
+//				URI uri = new URI(cmdbOrgUrl);
+//				Organization org = new Organization();
+//				org.setName(organization.getName());
+//				org.setSecurityServiceOrgId(organization.getId());
+//				ResponseEntity<Organization> result = restTemplate.postForEntity(uri, org, Organization.class);
+//			}
+//		}
+//	}
 
 	@Override
 	@RequestMapping(IConsts.API_DELETE)
@@ -647,11 +648,12 @@ public class UserController implements IApiController {
 				isFilter = true;
 			}
 			if (reqObj.get("organization") != null) {
-				Organization organization = new Organization();
-				organization.setName(reqObj.get("organization").asText().toUpperCase());
-				Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
-				if (oOrg.isPresent()) {
-					user.setOrganization(oOrg.get());
+				Organization organization = organizationService.getOrganizationByName(reqObj.get("organization").asText());
+//				organization.setName(reqObj.get("organization").asText().toUpperCase());
+//				Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
+
+				if (organization != null) {
+					user.setOrganization(organization);
 				}
 				isFilter = true;
 			}
@@ -674,6 +676,11 @@ public class UserController implements IApiController {
 			} else {
 				list = this.userRepository.findAll(Sort.by(Direction.ASC, "username"));
 			}
+            for(User obj: list){
+                if(!StringUtils.isBlank(obj.getFileName()) && "S3".equalsIgnoreCase(obj.getFileStorageLocationType())){
+                    obj.setProfileImage(downloadFileFromS3(obj.getFileStorageLocation(), obj.getFileName()));
+                }
+            }
 		} catch (Throwable th) {
 			logger.error(th.getMessage(), th);
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
@@ -681,8 +688,11 @@ public class UserController implements IApiController {
 		return ResponseEntity.status(HttpStatus.OK).body(list);
 	}
 
-	private void createUser(User user, String type, String username, String password, String email, Long ownerId) {
-		if (!StringUtils.isBlank(type)) {
+	private void createUser(User user, String type, String username, String password, Long ownerId, String email, String firstName, String middleName, String lastName) {
+		if(user == null){
+            user = new User();
+        }
+        if (!StringUtils.isBlank(type)) {
 			user.setType(type.toUpperCase());
 		}
 		if (!StringUtils.isBlank(username)) {
@@ -719,6 +729,15 @@ public class UserController implements IApiController {
             user.setCreatedBy(Constants.SYSTEM_ACCOUNT);
             user.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
         }
+        if(!StringUtils.isBlank(firstName)){
+            user.setFirstName(firstName);
+        }
+        if(!StringUtils.isBlank(middleName)){
+            user.setMiddleName(middleName);
+        }
+        if(!StringUtils.isBlank(lastName)){
+            user.setLastName(lastName);
+        }
 	}
 
 	@RequestMapping(path = "/updateOrganization", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
@@ -734,19 +753,19 @@ public class UserController implements IApiController {
 
 		Date currentDate = new Date();
 
-		Organization organization = new Organization();
-		organization.setName(reqObj.get("organizationName").toUpperCase());
-		Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
-		if (oOrg.isPresent()) {
+		Organization organization = organizationService.getOrganizationByName(reqObj.get("organizationName"));
+//		organization.setName(reqObj.get("organizationName").toUpperCase());
+//		Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
+		if (organization != null) {
 			logger.info("Organization with the given name found. Assigning existing organization to user");
-			user.setOrganization(oOrg.get());
+			user.setOrganization(organization);
 		} else {
 			logger.info("Organization no found. Creating new organization");
 			organization.setCreatedAt(currentDate);
 			organization.setUpdatedAt(currentDate);
 			organization.setCreatedBy(reqObj.get("userName"));
 			organization.setUpdatedBy(reqObj.get("userName"));
-			organization = this.organizationRepository.save(organization);
+			organization = organizationService.save(organization);
 			user.setOrganization(organization);
 		}
 
@@ -956,11 +975,11 @@ public class UserController implements IApiController {
 		try {
 
 			if (reqObj.get("organization") != null) {
-				Organization organization = new Organization();
-				organization.setName(reqObj.get("organization").toUpperCase());
-				Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
-				if (oOrg.isPresent()) {
-					user.setOrganization(oOrg.get());
+				Organization organization = organizationService.getOrganizationByName(reqObj.get("organization"));
+//				organization.setName(reqObj.get("organization").toUpperCase());
+//				Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
+				if (organization != null) {
+					user.setOrganization(organization);
 				}
 			}
 
@@ -1378,11 +1397,6 @@ public class UserController implements IApiController {
 //		}
 //	}
 
-	@Override
-	public ResponseEntity<Object> create(ObjectNode entity, HttpServletRequest request) {
-		// TODO Auto-generated method stub
-		return null;
-	}
 
     private Status setMessage(int stqtusCode, String stausType, String msg, Object obj){
         Status st = new Status();
@@ -1424,7 +1438,11 @@ public class UserController implements IApiController {
             roleList.addAll(roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), false));
 
             userList = userRepository.findByOrganizationId(user.getOrganization().getId());
-
+            for(User obj: userList){
+                if(!StringUtils.isBlank(obj.getFileName()) && "S3".equalsIgnoreCase(obj.getFileStorageLocationType())){
+                    obj.setProfileImage(downloadFileFromS3(obj.getFileStorageLocation(), obj.getFileName()));
+                }
+            }
             policyList.addAll(policyRepository.findByCreatedBy(Constants.SYSTEM_ACCOUNT));
             policyList.addAll(policyRepository.findByOrganizationId(user.getOrganization().getId()));
 
@@ -1452,6 +1470,9 @@ public class UserController implements IApiController {
                         }
                     }
                 }
+            }
+            if(!StringUtils.isBlank(user.getFileName()) && "S3".equalsIgnoreCase(user.getFileStorageLocationType())){
+                user.setProfileImage(downloadFileFromS3(user.getFileStorageLocation(), user.getFileName()));
             }
             for(Long papId: pMap.keySet()){
                 permissionCategoryList.add(pMap.get(papId));
