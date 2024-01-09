@@ -5,6 +5,9 @@ package com.synectiks.security.controllers;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.synectiks.security.config.Constants;
+import com.synectiks.security.entities.Config;
+import com.synectiks.security.entities.Organization;
+import com.synectiks.security.entities.Status;
 import com.synectiks.security.service.AppkubeAwsEmailService;
 import com.synectiks.security.entities.User;
 import com.synectiks.security.interfaces.IApiController;
@@ -13,6 +16,8 @@ import com.synectiks.security.models.AuthInfo;
 import com.synectiks.security.models.LoginRequest;
 import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.UserRepository;
+import com.synectiks.security.service.ConfigService;
+import com.synectiks.security.service.OrganizationService;
 import com.synectiks.security.util.IUtils;
 import org.apache.commons.beanutils.BeanUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -32,6 +37,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import software.amazon.awssdk.services.ses.model.SendEmailResponse;
 
 import java.io.IOException;
 import java.io.Serializable;
@@ -67,6 +73,12 @@ public class SecurityController {
 
     @Autowired
     private AppkubeAwsEmailService appkubeAwsEmailService;
+
+    @Autowired
+    private ConfigService configService;
+
+    @Autowired
+    private OrganizationService organizationService;
 
     @RequestMapping(value = "/login", method = RequestMethod.GET)
 	public ResponseEntity<Object> login(@RequestParam  String username, @RequestParam String password,
@@ -332,14 +344,16 @@ public class SecurityController {
     @RequestMapping(path = "/forgot-password", method = RequestMethod.GET)
     public ResponseEntity<Object> sendForgotPasswordMail(@RequestParam String userName) {
         logger.info("Request to send forgot password mail");
+        Organization organization = organizationService.getOrganizationByName(Constants.DEFAULT_ORGANIZATION);
+        Config configEmailFrom = configService.findByKeyAndOrganizationId(Constants.GLOBAL_APPKUBE_EMAIL_SENDER, organization.getId());
         User user = this.userRepository.findByUsername(userName);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("User not found");
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("User not found. User name : "+userName);
         }
         if (StringUtils.isBlank(user.getEmail())) {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("User's email not found. User Name :"+userName);
         }
-//        SendEmailResult status = awsEmailService.sendForgotPasswordMail(userName, user.getEmail());
+        SendEmailResponse status = appkubeAwsEmailService.sendForgotPasswordMail(user, configEmailFrom);
         return ResponseEntity.status(HttpStatus.OK).body("Mail sent");
     }
 

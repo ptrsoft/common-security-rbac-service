@@ -3,10 +3,13 @@ package com.synectiks.security.service;
 
 import com.amazonaws.services.simpleemail.AmazonSimpleEmailService;
 import com.synectiks.security.config.Constants;
+import com.synectiks.security.entities.Config;
 import com.synectiks.security.entities.EmailQueue;
 import com.synectiks.security.entities.User;
 import com.synectiks.security.repositories.UserRepository;
 import com.synectiks.security.util.EncryptionDecription;
+import com.synectiks.security.util.RandomGenerator;
+import com.synectiks.security.util.Token;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -46,7 +49,7 @@ public class AppkubeAwsEmailService {
             .replaceAll("##OWNERNAME##","AppKube");
         Content subjectContent = Content.builder().data(subject).build();
         Content bodyContent = Content.builder().data(msg).build();
-        Body body = Body.builder().text(bodyContent).build();
+        Body body = Body.builder().html(bodyContent).build();
         Message message = Message.builder()
             .subject(subjectContent)
             .body(body)
@@ -64,6 +67,32 @@ public class AppkubeAwsEmailService {
         return sendEmailResponse;
     }
 
+    public SendEmailResponse sendForgotPasswordMail(User user, Config configEmailFrom) {
+        String token = RandomGenerator.getRandomString(6);
+        List<String> toAddresses = new ArrayList<>();
+        toAddresses.add(user.getEmail());
+        String subject = "OTP to reset password";
+        String msg = "<h3>OTP to reset password will expire in 10 minutes.</h3><br>"+token;
+        Content subjectContent = Content.builder().data(subject).build();
+        Content bodyContent = Content.builder().data(msg).build();
+        Body body = Body.builder().html(bodyContent).build();
+        Message message = Message.builder()
+            .subject(subjectContent)
+            .body(body)
+            .build();
+        Destination destination = Destination.builder()
+            .toAddresses(toAddresses)
+            .build();
+        SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
+            .source(configEmailFrom.getValue())
+            .destination(destination)
+            .message(message)
+            .build();
+        Token.put(user.getUsername(), token);
+        SendEmailResponse sendEmailResponse = sesClient.sendEmail(sendEmailRequest);
+        logger.debug("OTP sent in forgot-password mail. Aws mail response message id: {}", sendEmailResponse.messageId());
+        return sendEmailResponse;
+    }
 //    public void sendMail(String accessKey, String secretKey, String senderEmail, String recipientEmail, String awsEmailServiceEndPoint, String region) {
 //
 //        // Set up the AWS credentials
@@ -90,27 +119,7 @@ public class AppkubeAwsEmailService {
 //        System.out.println("Email sent. Message ID: " + result.getMessageId());
 //    }
 
-//    public SendEmailResult sendForgotPasswordMail(String userName, String recipientEmail) {
-//        AmazonSimpleEmailService client = getAwsEmailClient();
-//        String token = RandomGenerator.getRandomString(6);
-//
-//        String msg = "<h1>OTP to reset password will expire in 10 minutes.</h1><br>"+token;
-//        // Create a request to send an email
-//        SendEmailRequest request = new SendEmailRequest()
-//            .withSource(awsSenderMail)
-//            .withDestination(
-//                new Destination().withToAddresses(recipientEmail))
-//            .withMessage(new Message()
-//                .withSubject(new Content().withCharset("UTF-8").withData("OTP to reset password"))
-//                .withBody(new Body()
-//                    .withHtml(new Content().withCharset("UTF-8").withData(msg))));
-//
-//        // Send the email
-//        Token.put(userName, token);
-//        SendEmailResult result = client.sendEmail(request);
-//        System.out.println("OTP to rest password sent in mail");
-//        return result;
-//    }
+
 
 //    public SendEmailResult sendNewUserMail(User user) {
 ////        AmazonSimpleEmailService client = getAwsEmailClient();

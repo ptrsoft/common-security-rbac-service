@@ -32,10 +32,10 @@ public class EmailController {
     @Autowired
     private EmailQueueService emailQueueService;
     /**
-     * Below spring boot cron job run every 5 minutes.
+     * Below spring boot cron job run every 1 minutes.
      * @return
      */
-    @Scheduled(cron = "0 */5 * ? * *")
+    @Scheduled(cron = "0 */1 * ? * *")
     @RequestMapping("/send-new-user-registration-mail")
     public String sendNewUserRegistrationMail() {
         List<EmailQueue> pendingMails = emailQueueService.findByStatusAndMailType(Constants.STATUS_PENDING, Constants.TYPE_NEW_USER);
