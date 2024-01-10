@@ -348,13 +348,16 @@ public class SecurityController {
         Config configEmailFrom = configService.findByKeyAndOrganizationId(Constants.GLOBAL_APPKUBE_EMAIL_SENDER, organization.getId());
         User user = this.userRepository.findByUsername(userName);
         if (user == null) {
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("User not found. User name : "+userName);
+            Status st = new Status(HttpStatus.EXPECTATION_FAILED.value(),"User not found. User name : "+userName, false);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
         }
         if (StringUtils.isBlank(user.getEmail())) {
-            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("User's email not found. User Name :"+userName);
+            Status st = new Status(HttpStatus.valueOf(418).value(),"User's email not found. User Name :"+userName, false);
+            return ResponseEntity.status(HttpStatus.valueOf(418)).body(st);
         }
         SendEmailResponse status = appkubeAwsEmailService.sendForgotPasswordMail(user, configEmailFrom);
-        return ResponseEntity.status(HttpStatus.OK).body("Mail sent");
+        Status st = new Status(HttpStatus.OK.value(), "Mail sent", true);
+        return ResponseEntity.status(HttpStatus.OK).body(st);
     }
 
     private class Status{
