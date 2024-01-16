@@ -37,6 +37,7 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
+import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -1148,8 +1149,8 @@ public class UserController implements IApiController {
         }
     }
 
-    @RequestMapping(value = "/disableMfa", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
-    public ResponseEntity<Object> disableGoogleMfa(@RequestBody ObjectNode reqObj) {
+    @RequestMapping(value = "/disableMfaByToken", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> disableGoogleMfaByToken(@RequestBody ObjectNode reqObj) {
         logger.error("Request to disable google MFA");
 
         if (StringUtils.isBlank(reqObj.get("userName").asText())) {
@@ -1174,14 +1175,14 @@ public class UserController implements IApiController {
                 matches = gAuth.authorize(user.getGoogleMfaKey(), Integer.parseInt(reqObj.get("token").asText()));
                 if(matches) {
                     logger.info("Google MFA authentication successful. Disabling MFA for user {}",reqObj.get("userName").asText());
-                    user.setIsMfaEnable(null);
+                    user.setIsMfaEnable(Constants.NO);
                     user.setGoogleMfaKey(null);
                     user = userRepository.save(user);
                     logger.info("Google MFA is disabled for user: {}", reqObj.get("userName").asText());
                     st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google MFA token disabled", matches);
                 }else {
                     logger.warn("Google mfa authentication failed");
-                    st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google MFA token authentication failed. MFA could not be disabled", matches);
+                    st = setMessage(HttpStatus.OK.value(), "ERROR","Google MFA token authentication failed. MFA could not be disabled", matches);
                 }
             }else{
                 logger.info("Google MFA is already disabled for user: {}", reqObj.get("userName").asText());
@@ -1193,6 +1194,63 @@ public class UserController implements IApiController {
             Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Exception while disabling MFA token", null);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
         }
+    }
+
+    @RequestMapping(value = "/disableMfa", consumes = MediaType.APPLICATION_JSON_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Object> disableGoogleMfa(@RequestBody ObjectNode reqObj) {
+        logger.error("Request to disable google MFA");
+
+        if (StringUtils.isBlank(reqObj.get("userName").asText())) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","User name not provided",null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        if (StringUtils.isBlank(reqObj.get("password").asText())) {
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Password not provided",null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+
+        UsernamePasswordToken token = new UsernamePasswordToken();
+        token.setUsername(reqObj.get("userName").asText());
+        token.setPassword(reqObj.get("password").asText().toCharArray());
+
+        Status st = null;
+        try {
+            AuthenticationInfo info = SecurityUtils.getSecurityManager().authenticate(token);
+            User user = this.userRepository.findByUsername(reqObj.get("userName").asText());
+            user.setIsMfaEnable(Constants.NO);
+            user.setGoogleMfaKey(null);
+
+            user.setUpdatedBy(user.getUsername());
+            user.setUpdatedAt(new Date());
+            if (reqObj.get("updatedBy") != null && !StringUtils.isBlank(reqObj.get("updatedBy").asText())) {
+                User updatedBy = this.userRepository.findByUsername(reqObj.get("updatedBy").asText());
+                if(updatedBy != null){
+                    user.setUpdatedBy(updatedBy.getUsername());
+                }
+            }
+            user = userRepository.save(user);
+            logger.info("Google MFA is disabled for user: {}", reqObj.get("userName").asText());
+            st = setMessage(HttpStatus.OK.value(), "SUCCESS","Google MFA disabled", null);
+        }catch (UnknownAccountException th) {
+            //username wasn't in the system, show them an error message?
+            logger.error(th.getMessage(), th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th.getLocalizedMessage());
+        } catch (IncorrectCredentialsException th) {
+            //password didn't match, try again?
+            logger.error(th.getMessage(), th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th.getLocalizedMessage());
+        } catch (LockedAccountException th) {
+            //account for that username is locked - can't login.  Show them a message?
+            logger.error(th.getMessage(), th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th.getLocalizedMessage());
+        } catch (AuthenticationException th) {
+            // General exception thrown due to an error during the Authentication process
+            logger.error(th.getMessage(), th);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th.getLocalizedMessage());
+        }
+
+        return ResponseEntity.status(HttpStatus.OK).body(st);
+
     }
 
 
