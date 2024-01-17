@@ -170,4 +170,18 @@ public class Role extends PSqlEntity {
 		return role;
 	}
 
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
+        Role otherObject = (Role) obj;
+
+        return this.id == otherObject.id;
+    }
+
 }

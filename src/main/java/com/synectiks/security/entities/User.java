@@ -399,4 +399,18 @@ public class User extends PSqlEntity {
     public void setFileStorageLocation(String fileStorageLocation) {
         this.fileStorageLocation = fileStorageLocation;
     }
+
+    @Override
+    public boolean equals(Object obj) {
+        if (this == obj) {
+            return true;
+        }
+        if (obj == null || getClass() != obj.getClass()) {
+            return false;
+        }
+
+        User otherObject = (User) obj;
+
+        return this.id == otherObject.id;
+    }
 }

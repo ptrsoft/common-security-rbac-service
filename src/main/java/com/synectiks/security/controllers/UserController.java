@@ -37,7 +37,6 @@ import org.springframework.web.multipart.MultipartFile;
 import javax.mail.internet.MimeMessage;
 import javax.servlet.http.HttpServletRequest;
 import java.io.*;
-import java.lang.reflect.InvocationTargetException;
 import java.nio.file.Files;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -74,9 +73,6 @@ public class UserController implements IApiController {
     @Autowired
     private PermissionCategoryRepository permissionCategoryRepository;
 
-//    @Autowired
-//	private OrganizationRepository organizationRepository;
-
 	@Autowired
 	private MailService mailService;
 
@@ -89,14 +85,8 @@ public class UserController implements IApiController {
 	@Autowired
 	private RestTemplate restTemplate;
 
-//	@Autowired
-//	private DocumentService documentService;
-
     @Autowired
     private AppkubeAwsEmailService appkubeAwsEmailService;
-
-//    @Autowired
-//    private EmailQueueRepository emailQueueRepository;
 
     @Autowired
     private AppkubeAwsS3Service appkubeAwsS3Service;
@@ -136,24 +126,6 @@ public class UserController implements IApiController {
         }
         return ResponseEntity.status(HttpStatus.OK).body(entities);
     }
-
-//	private void setProfileImage(User by) throws IOException {
-//		Map<String, String> requestObj = new HashMap<>();
-//		requestObj.put("sourceId", String.valueOf(by.getId()));
-//		requestObj.put("identifier", Constants.IDENTIFIER_PROFILE_IMAGE);
-//		List<Document> docList = documentService.searchDocument(requestObj);
-//		for (Document doc : docList) {
-//			if (doc.getIdentifier().equalsIgnoreCase(Constants.IDENTIFIER_PROFILE_IMAGE)) {
-//				if (doc.getLocalFilePath() != null) {
-//                    if(Files.exists(Paths.get(doc.getLocalFilePath()))){
-//                        byte[] bytes = Files.readAllBytes(Paths.get(doc.getLocalFilePath()));
-//                        by.setProfileImage(bytes);
-//                    }
-//				}
-//				break;
-//			}
-//		}
-//	}
 
     /**
      * type - SUPER_ADMIN, ADMIN, USER etc..
@@ -318,8 +290,6 @@ public class UserController implements IApiController {
 //        }
 //        return ResponseEntity.status(HttpStatus.CREATED).body(user);
 //    }
-
-
 
 	private void uploadProfileImageToS3(MultipartFile multipartFile, User user) throws IOException {
 		if (multipartFile != null) {
@@ -580,36 +550,6 @@ public class UserController implements IApiController {
         return null;
     }
 
-//	private void saveUpdateOrganization(ObjectNode  reqObje, User user, Date currentDate) throws URISyntaxException {
-//		if (!StringUtils.isBlank(reqObje.get("organization").toString())) {
-//			Organization organization = new Organization();
-//			organization.setName(reqObje.get("organization").toString().toUpperCase());
-//			Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(organization));
-//			if (oOrg.isPresent()) {
-//				user.setOrganization(oOrg.get());
-//			} else {
-//				logger.info("Saving new organization: " + organization);
-//				organization.setCreatedAt(currentDate);
-//				organization.setUpdatedAt(currentDate);
-//				if (reqObje.get("username") != null) {
-//					organization.setCreatedBy(reqObje.get("username").toString());
-//					organization.setUpdatedBy(reqObje.get("username").toString());
-//				} else {
-//					organization.setCreatedBy(Constants.SYSTEM_ACCOUNT);
-//					organization.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-//				}
-//				organization = this.organizationRepository.save(organization);
-//				user.setOrganization(organization);
-//
-//				URI uri = new URI(cmdbOrgUrl);
-//				Organization org = new Organization();
-//				org.setName(organization.getName());
-//				org.setSecurityServiceOrgId(organization.getId());
-//				ResponseEntity<Organization> result = restTemplate.postForEntity(uri, org, Organization.class);
-//			}
-//		}
-//	}
-
 	@Override
 	@RequestMapping(IConsts.API_DELETE)
 	public ResponseEntity<Object> delete(@RequestBody ObjectNode entity) {
@@ -830,6 +770,39 @@ public class UserController implements IApiController {
 			return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(e);
 		}
 	}
+
+    @RequestMapping(path = "/addUsersToRoleGroup")
+    public ResponseEntity<Object> addUsersToRoleGroup(@RequestParam String userIds, @RequestParam String roleId) {
+        Status st = null;
+        Optional<Role> oRole = roleRepository.findById(Long.parseLong(roleId));
+        if(!oRole.isPresent()){
+            logger.error("Role not found. Role id: {}",roleId);
+            st = new Status();
+            st.setCode(HttpStatus.EXPECTATION_FAILED.value());
+            st.setType("ERROR");
+            st.setMessage("Role not found. ");
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        logger.info("Request to add user's to role group. Role group: {}",oRole.get().getName());
+        StringTokenizer token = new StringTokenizer(userIds, ",");
+        while (token.hasMoreTokens()) {
+            Optional<User> oUser = this.userRepository.findById(Long.parseLong(token.nextToken()));
+            if (oUser.isPresent()) {
+                User user = oUser.get();
+                if(!user.getRoles().contains(oRole.get())){
+                    logger.debug("Adding user: {} to role group: {}",user.getUsername(), oRole.get().getName());
+                    user.getRoles().add(oRole.get());
+                    userRepository.save(user);
+                }
+            }
+        }
+        st = new Status();
+        st.setCode(HttpStatus.OK.value());
+        st.setType("SUCCESS");
+        st.setMessage("User's added to role group successfully");
+        logger.info("User's added to role group successfully");
+        return ResponseEntity.status(HttpStatus.OK).body(st);
+    }
 
 	@RequestMapping(path = "/inviteUser")
 	public ResponseEntity<Object> createUserInvite(@RequestParam String username, @RequestParam String inviteeEmail) {
@@ -1588,6 +1561,7 @@ public class UserController implements IApiController {
         Map<Long, User> userMap = new HashMap<>();
 
         for(User user1: userList){
+//            userRolesMap.put(user1.getId(), user1.getRoles());
             for(Role roleGrp: user1.getRoles()){
                 if(!userRolesMap.containsKey(user1.getId())){
                     List<Role> temp = new ArrayList<>();
