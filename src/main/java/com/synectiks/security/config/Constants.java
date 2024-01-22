@@ -57,6 +57,9 @@ public final class Constants {
         "<a href=\"https://appkube.synectiks.net\">https://appkube.synectiks.net</a> <br>" +
         "<br>" +
         "Best regards,<br><h3>##OWNERNAME##</h3>";
+
+    public static String CMDB_ORGANIZATION_URL = "CMDB_ORGANIZATION_URL";
+    public static String GLOBAL_SESSION_TIMEOUT = "GLOBAL_SESSION_TIMEOUT";
     private Constants() {
 
     }
