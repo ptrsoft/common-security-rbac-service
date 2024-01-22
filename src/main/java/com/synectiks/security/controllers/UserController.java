@@ -51,11 +51,8 @@ public class UserController implements IApiController {
 
 	private static final Logger logger = LoggerFactory.getLogger(UserController.class);
 
-    @Value("${synectiks.aws.mail.sender}")
-    private String awsSenderMail;
-
-	@Value("${synectiks.cmdb.organization.url}")
-	private String cmdbOrgUrl;
+//	@Value("${synectiks.cmdb.organization.url}")
+//	private String cmdbOrgUrl;
 	private DefaultPasswordService shiroPasswordService = new DefaultPasswordService();
 
 	@Autowired
@@ -544,7 +541,9 @@ public class UserController implements IApiController {
     public String resolveTargetServiceUrl(String targetService){
         if(!StringUtils.isBlank(targetService)){
             if("CMDB".equalsIgnoreCase(targetService)){
-                return cmdbOrgUrl;
+                Organization organization = organizationService.getOrganizationByName(Constants.DEFAULT_ORGANIZATION);
+                Config config = configService.findByKeyAndOrganizationId(Constants.CMDB_ORGANIZATION_URL, organization.getId());
+                return config.getValue();
             }
         }
         return null;
@@ -771,18 +770,35 @@ public class UserController implements IApiController {
 		}
 	}
 
-    @RequestMapping(path = "/addUsersToRoleGroup")
-    public ResponseEntity<Object> addUsersToRoleGroup(@RequestParam String userIds, @RequestParam String roleId) {
+    @RequestMapping(path = "/assingRoleGroupToUsers")
+    public ResponseEntity<Object> assingRoleGroupToUsers(@RequestBody ObjectNode reqObj, HttpServletRequest request) {
         Status st = null;
-        Optional<Role> oRole = roleRepository.findById(Long.parseLong(roleId));
+        if(reqObj.get("roleId") == null){
+            st = new Status();
+            st.setCode(HttpStatus.EXPECTATION_FAILED.value());
+            st.setType("ERROR");
+            st.setMessage("Role id not provided");
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        if(reqObj.get("userIds") == null){
+            st = new Status();
+            st.setCode(HttpStatus.EXPECTATION_FAILED.value());
+            st.setType("ERROR");
+            st.setMessage("User id not provided");
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+
+        Long roleId = reqObj.get("roleId").asLong();
+        Optional<Role> oRole = roleRepository.findById(roleId);
         if(!oRole.isPresent()){
             logger.error("Role not found. Role id: {}",roleId);
             st = new Status();
             st.setCode(HttpStatus.EXPECTATION_FAILED.value());
             st.setType("ERROR");
-            st.setMessage("Role not found. ");
+            st.setMessage("Role not found");
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
         }
+        String userIds = reqObj.get("userIds").asText();
         logger.info("Request to add user's to role group. Role group: {}",oRole.get().getName());
         StringTokenizer token = new StringTokenizer(userIds, ",");
         while (token.hasMoreTokens()) {
@@ -796,11 +812,12 @@ public class UserController implements IApiController {
                 }
             }
         }
+        String msg = "User's added to role group successfully";
         st = new Status();
         st.setCode(HttpStatus.OK.value());
         st.setType("SUCCESS");
-        st.setMessage("User's added to role group successfully");
-        logger.info("User's added to role group successfully");
+        st.setMessage(msg);
+        logger.info(msg);
         return ResponseEntity.status(HttpStatus.OK).body(st);
     }
 
