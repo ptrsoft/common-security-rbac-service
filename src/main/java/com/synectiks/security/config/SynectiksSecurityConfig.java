@@ -3,7 +3,10 @@
  */
 package com.synectiks.security.config;
 
+import com.synectiks.security.entities.Config;
+import com.synectiks.security.entities.Organization;
 import com.synectiks.security.models.SecurityRule;
+import com.synectiks.security.service.ConfigService;
 import com.synectiks.security.util.IUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shiro.authc.credential.DefaultPasswordService;
@@ -18,10 +21,13 @@ import org.apache.shiro.web.session.mgt.DefaultWebSessionManager;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.aop.framework.autoproxy.DefaultAdvisorAutoProxyCreator;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.DependsOn;
+import org.springframework.core.env.Environment;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -42,9 +48,7 @@ public class SynectiksSecurityConfig {
 	@Value("${synectiks.shiro.public.urls}")
 	private String publicUrls;
 
-    @Value("${synectiks.session.timeout}")
-    private Long sessionTimeout;
-
+    private Long sessionTimeout = 15L;
     private static final long MILLIS_PER_SECOND = 1000L;
     private static final long MILLIS_PER_MINUTE = 60000L;
 
@@ -74,10 +78,10 @@ public class SynectiksSecurityConfig {
 			if (!IUtils.isNull(props)) {
 				secureUrls = props.getProperty("synectiks.shiro.secure.urls");
 				publicUrls = props.getProperty("synectiks.shiro.public.urls");
-                sessionTimeout = !StringUtils.isBlank(props.getProperty("synectiks.session.timeout")) ? Long.parseLong(props.getProperty("synectiks.session.timeout")) : 30L;
+//                sessionTimeout = !StringUtils.isBlank(props.getProperty("synectiks.session.timeout")) ? Long.parseLong(props.getProperty("synectiks.session.timeout")) : 30L;
 			}
 		}
-        logger.info("Session timeout : {}",sessionTimeout);
+//        logger.info("Session timeout : {}",sessionTimeout);
 	}
 
 	@Bean

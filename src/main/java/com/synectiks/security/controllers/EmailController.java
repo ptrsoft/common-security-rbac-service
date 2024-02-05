@@ -20,19 +20,15 @@ import java.util.List;
 public class EmailController {
 
 	private static final Logger logger = LoggerFactory.getLogger(EmailController.class);
-//
-//	@Autowired
-//	private MailService mailService;
-//
-//    @Autowired
-//    private AwsEmailService awsEmailService;
+
     @Autowired
     private AppkubeAwsEmailService appkubeAwsEmailService;
 
     @Autowired
     private EmailQueueService emailQueueService;
+
     /**
-     * Below spring boot cron job run every 1 minutes.
+     * Below spring boot cron job run every 1 minute.
      * @return
      */
     @Scheduled(cron = "0 */1 * ? * *")
@@ -50,7 +46,29 @@ public class EmailController {
             emailQueue.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
             emailQueueService.save(emailQueue);
         }
-        return "Congratulations! Your mail has been send to the user.";
+        return "Congratulations! Your mail has been sent to the user";
+    }
+
+
+    /**
+     * Below spring boot cron job run every 1 minute.
+     * @return
+     */
+    @Scheduled(cron = "0 */1 * ? * *")
+    @RequestMapping("/send-new-org-user-registration-mail")
+    public String sendNewOrgUserRegistrationMail() {
+        List<EmailQueue> pendingMails = emailQueueService.findByStatusAndMailType(Constants.STATUS_PENDING, Constants.TYPE_NEW_ORG_USER_REQUEST);
+        for(EmailQueue emailQueue: pendingMails){
+            emailQueue.setStatus(Constants.STATUS_IN_PROCESS);
+            emailQueue.setUpdatedAt(new Date());
+            emailQueue.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
+            emailQueueService.save(emailQueue);
+            appkubeAwsEmailService.sendNewOrgUserRegistrationMail(emailQueue);
+            emailQueue.setStatus(Constants.STATUS_SENT);
+            emailQueue.setUpdatedAt(new Date());
+            emailQueue.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
+        }
+        return "Congratulations! Your new org user registration mail has been sent to the user";
     }
 
 

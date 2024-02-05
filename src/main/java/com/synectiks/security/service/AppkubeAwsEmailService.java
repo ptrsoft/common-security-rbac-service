@@ -67,6 +67,39 @@ public class AppkubeAwsEmailService {
         return sendEmailResponse;
     }
 
+    public SendEmailResponse sendNewOrgUserRegistrationMail(EmailQueue emailQueue) {
+        logger.debug("Sending new org user registration mail to user : {}", emailQueue.getUserName());
+        User user = userRepository.findByUsername(emailQueue.getUserName());
+        if(user == null){
+            logger.error("User not found. User name: {}", emailQueue.getUserName());
+            return null;
+        }
+        List<String> toAddresses = new ArrayList<>();
+        toAddresses.add(emailQueue.getMailTo());
+        String subject = Constants.MAIL_SUBJECT_NEW_ORG_USER_REQUEST;
+        String msg = Constants.MAIL_BODY_NEW_ORG_USER_REQUEST
+            .replaceAll("##USERNAME##",emailQueue.getUserName())
+            .replaceAll("##OWNERNAME##","AppKube");
+        Content subjectContent = Content.builder().data(subject).build();
+        Content bodyContent = Content.builder().data(msg).build();
+        Body body = Body.builder().html(bodyContent).build();
+        Message message = Message.builder()
+            .subject(subjectContent)
+            .body(body)
+            .build();
+        Destination destination = Destination.builder()
+            .toAddresses(toAddresses)
+            .build();
+        SendEmailRequest sendEmailRequest = SendEmailRequest.builder()
+            .source(emailQueue.getMailFrom())
+            .destination(destination)
+            .message(message)
+            .build();
+        SendEmailResponse sendEmailResponse = sesClient.sendEmail(sendEmailRequest);
+        logger.debug("New org user registration mail sent. Aws mail response message id: {}", sendEmailResponse.messageId());
+        return sendEmailResponse;
+    }
+
     public SendEmailResponse sendForgotPasswordMail(User user, Config configEmailFrom) {
         String token = RandomGenerator.getRandomString(6);
         List<String> toAddresses = new ArrayList<>();

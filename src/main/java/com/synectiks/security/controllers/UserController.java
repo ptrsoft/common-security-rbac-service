@@ -21,7 +21,6 @@ import org.apache.shiro.authc.credential.DefaultPasswordService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.Sort;
@@ -53,7 +52,7 @@ public class UserController implements IApiController {
 
 //	@Value("${synectiks.cmdb.organization.url}")
 //	private String cmdbOrgUrl;
-	private DefaultPasswordService shiroPasswordService = new DefaultPasswordService();
+	private final DefaultPasswordService shiroPasswordService = new DefaultPasswordService();
 
 	@Autowired
 	private UserRepository userRepository;
@@ -145,7 +144,7 @@ public class UserController implements IApiController {
      * @param firstName
      * @param middleName
      * @param lastName
-     * @param file
+     * @param userProfileImage
      * @param request
      * @return
      */
@@ -162,7 +161,8 @@ public class UserController implements IApiController {
                                          @RequestParam(name = "firstName", required = false) String firstName,
                                          @RequestParam(name = "middleName", required = false) String middleName,
                                          @RequestParam(name = "lastName", required = false) String lastName,
-                                         @RequestParam(name = "file", required = false) MultipartFile file,
+                                         @RequestParam(name = "file", required = false) MultipartFile userProfileImage,
+//                                         @RequestParam(name = "orgProfileFile", required = false) MultipartFile orgProfileFile,
                                          HttpServletRequest request) {
         logger.info("Request to create new user. user name: {}",username);
         // check if user already exists
@@ -225,21 +225,21 @@ public class UserController implements IApiController {
 
         logger.debug("Saving user: {}", user.getUsername());
         try {
-            uploadProfileImageToS3(file, user);
+            uploadUserProfileImageToS3(userProfileImage, user);
         } catch (Throwable th) {
-            logger.error("Exception in uploading file to aws s3: ",th);
+            logger.error("Exception in uploading user profile image to aws s3: ",th);
         }
         user = userRepository.save(user);
         logger.info("User created successfully. User id: {}",user.getId());
 
         if(!StringUtils.isBlank(email)){
             logger.info("Pushing new user registration mail to email_queue");
-            setNewUserMailToQueue(user);
+            setNewUserMailToQueue(user, Constants.TYPE_NEW_USER);
         }
 		return ResponseEntity.status(HttpStatus.CREATED).body(user);
 	}
 
-    private void setNewUserMailToQueue(User user) {
+    private void setNewUserMailToQueue(User user, String type) {
         Organization organization = organizationService.getOrganizationByName(Constants.DEFAULT_ORGANIZATION);
         Config configEmailFrom = configService.findByKeyAndOrganizationId(Constants.GLOBAL_APPKUBE_EMAIL_SENDER, organization.getId());
         EmailQueue emailQueue = new EmailQueue();
@@ -248,47 +248,57 @@ public class UserController implements IApiController {
         emailQueue.setStatus(Constants.STATUS_PENDING);
         emailQueue.setMailTo(user.getEmail());
         emailQueue.setMailFrom(configEmailFrom.getValue());
-        emailQueue.setMailType(Constants.TYPE_NEW_USER);
+        emailQueue.setMailType(type);
         emailQueue.setUserName(user.getUsername());
         emailQueue.setOrganization(user.getOrganization());
         emailQueueService.save(emailQueue);
     }
 
-//    @RequestMapping(IConsts.API_CREATE+"/new-org-user")
-//    public ResponseEntity<Object> createNewOrgUser(@RequestParam(name = "organization", required = true) String organization,
-//                                                   @RequestParam(name = "email", required = true) String email,
-//                                                   HttpServletRequest request) {
-//        // Check email already registered with any user
-//        logger.info("Checking user email already registered with any user");
-//        User user = userRepository.findByEmail(email);
-//        if(user != null){
-//            logger.error("Email already exist");
-//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exist", null);
-//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-//        }
-//
-//        if (!StringUtils.isBlank(organization)) {
-//            Organization orgObj = new Organization();
-//            orgObj.setName(organization.toUpperCase());
-//            Optional<Organization> oOrg = this.organizationRepository.findOne(Example.of(orgObj));
-//            if (oOrg.isPresent()) {
-//                user.setOrganization(oOrg.get());
-//            }
-//        }
-//        try {
-//            createUser(user, "NEW_ORG_USER_REQUEST", null, null, null);
-//            logger.info("Saving user: " + user);
-//            user.setActive(false);
-//            user = userRepository.save(user);
-//        } catch (Throwable th) {
-//            logger.error("Exception: ",th);
-//            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Service issues. User data cannot be saved", null);
-//            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
-//        }
-//        return ResponseEntity.status(HttpStatus.CREATED).body(user);
-//    }
+    @RequestMapping("/new-org-user")
+    public ResponseEntity<Object> createNewOrgUser(@RequestParam(name = "organization", required = true) String organizationName,
+                                                   @RequestParam(name = "email", required = true) String email,
+                                                   HttpServletRequest request) {
+        logger.info("Request to create new user in organization. Organization: {}",organizationName);
 
-	private void uploadProfileImageToS3(MultipartFile multipartFile, User user) throws IOException {
+        // Check email already registered with any user
+        logger.info("Checking user email already registered with any user");
+        User user = userRepository.findByEmail(email);
+        if(user != null){
+            logger.error("Email already exist");
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR","Email already exist", null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+
+        user = this.userRepository.findByUsername(email);
+        if (user != null) {
+            logger.error("User name/Login id already exists. user name: {}",email);
+            Status st = setMessage(HttpStatus.valueOf(421).value(), "ERROR","User name/Login id already exist", null);
+            return ResponseEntity.status(HttpStatus.valueOf(421)).body(st);
+        }
+
+        user = new User();
+        createUser(user, Constants.TYPE_NEW_ORG_USER_REQUEST, email, null, null, email, null, null, null);
+
+        if (!StringUtils.isBlank(organizationName)) {
+            Organization organization = organizationService.getOrganizationByName(organizationName);
+            if(organization == null){
+                logger.error("Given organization: {} not found",organizationName);
+                Status st = setMessage(HttpStatus.valueOf(425).value(), "ERROR","Organization not found. Given organization name: "+organizationName, null);
+                return ResponseEntity.status(HttpStatus.valueOf(425)).body(st);
+            }
+            user.setOrganization(organization);
+        }
+
+        logger.info("Saving new org user request: " + user);
+        user.setActive(false);
+        user = userRepository.save(user);
+        logger.info("Pushing new org user request mail to email_queue");
+        setNewUserMailToQueue(user, Constants.TYPE_NEW_ORG_USER_REQUEST);
+        Status st = setMessage(HttpStatus.CREATED.value(), Constants.SUCCESS,"New org user request saved.", null);
+        return ResponseEntity.status(HttpStatus.CREATED).body(st);
+    }
+
+	private void uploadUserProfileImageToS3(MultipartFile multipartFile, User user) throws IOException {
 		if (multipartFile != null) {
 			String orgFileName = org.springframework.util.StringUtils.cleanPath(multipartFile.getOriginalFilename());
 			String ext = "";
@@ -467,7 +477,7 @@ public class UserController implements IApiController {
         Date currentDate = new Date();
         existingUser.setUpdatedAt(currentDate);
         try {
-            uploadProfileImageToS3(file, existingUser);
+            uploadUserProfileImageToS3(file, existingUser);
         } catch (Throwable th) {
             logger.error("Exception in uploading file to aws s3: ",th);
         }

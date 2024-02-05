@@ -1,10 +1,13 @@
 package com.synectiks.security.controllers;
 
+import com.synectiks.security.config.Constants;
+import com.synectiks.security.entities.Config;
 import com.synectiks.security.entities.Organization;
 import com.synectiks.security.entities.User;
 import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.UserRepository;
+import com.synectiks.security.service.ConfigService;
 import com.synectiks.security.service.OrganizationService;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -28,8 +31,8 @@ public class OrganizationController {
 
 	private static final Logger logger = LoggerFactory.getLogger(OrganizationController.class);
 
-    @Value("${synectiks.cmdb.organization.url}")
-    private String cmdbOrgUrl;
+//    @Value("${synectiks.cmdb.organization.url}")
+//    private String cmdbOrgUrl;
 
     @Autowired
     private RestTemplate restTemplate;
@@ -42,6 +45,9 @@ public class OrganizationController {
 
 	@Autowired
 	private UserRepository userRepository;
+
+    @Autowired
+    private ConfigService configService;
 
 	@GetMapping("/getAllOrganizations")
 	private List<Organization> getAllOrganization() {
@@ -102,7 +108,9 @@ public class OrganizationController {
         logger.info("Organization created successfully");
         if(pushToCmdb){
             logger.info("Creating same organization in CMDB. pushToCmdb is {}",pushToCmdb);
-            URI uri = new URI(cmdbOrgUrl);
+            Organization defaultOrg = organizationService.getOrganizationByName(Constants.DEFAULT_ORGANIZATION);
+            Config config = configService.findByKeyAndOrganizationId(Constants.CMDB_ORGANIZATION_URL, defaultOrg.getId());
+            URI uri = new URI(config.getValue());
 
             Organization org = new Organization();
             org.setName(result.getName());
@@ -130,7 +138,10 @@ public class OrganizationController {
             Status st = new Status(417, "organization not found");
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
         }
-        URI uri = new URI(cmdbOrgUrl);
+
+        Organization organization = organizationService.getOrganizationByName(Constants.DEFAULT_ORGANIZATION);
+        Config config = configService.findByKeyAndOrganizationId(Constants.CMDB_ORGANIZATION_URL, organization.getId());
+        URI uri = new URI(config.getValue());
 
         Organization org = new Organization();
         org.setName(existingOrganization.getName().toUpperCase());

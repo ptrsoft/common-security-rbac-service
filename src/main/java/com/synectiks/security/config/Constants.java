@@ -58,8 +58,21 @@ public final class Constants {
         "<br>" +
         "Best regards,<br><h3>##OWNERNAME##</h3>";
 
+    public static String MAIL_SUBJECT_NEW_ORG_USER_REQUEST = "New User Registration Request In AppKube";
+    public static String MAIL_BODY_NEW_ORG_USER_REQUEST = "Dear <h3>##USERNAME##</h3>,<br>" +
+        "Welcome to AppKube.<br>" +
+        "Your request to register yourself as AppKube user has been registered.<br>" +
+        "<br>" +
+        "Status of your request will be notified in further mails.<br>" +
+        "<br>" +
+        "Best regards,<br><h3>##OWNERNAME##</h3>";
+
     public static String CMDB_ORGANIZATION_URL = "CMDB_ORGANIZATION_URL";
     public static String GLOBAL_SESSION_TIMEOUT = "GLOBAL_SESSION_TIMEOUT";
+
+    public static String TYPE_NEW_ORG_USER_REQUEST = "NEW_ORG_USER_REQUEST";
+    public static String SUCCESS = "SUCCESS";
+    public static String ERROR = "ERROR";
     private Constants() {
 
     }

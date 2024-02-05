@@ -22,15 +22,13 @@ public class ConfigService {
     private ConfigRepository configRepository;
 
 
-    public List<Config> findByKey(String key) {
+    public Config findByKey(String key) {
         logger.info("Find config by key. Key: {}",key);
-        List<Config> configList = configRepository.findByKey(key);
-        for(Config config: configList){
-            if(config.isEncrypted()){
-                config.setValue(EncryptionDecription.decrypt(config.getValue()));
-            }
+        Config config = configRepository.findByKey(key);
+        if(config.isEncrypted()){
+            config.setValue(EncryptionDecription.decrypt(config.getValue()));
         }
-        return configList;
+        return config;
     }
 
     public Config findByKeyAndOrganizationId(String key, Long organizationId){

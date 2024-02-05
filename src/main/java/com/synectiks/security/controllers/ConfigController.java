@@ -27,8 +27,8 @@ public class ConfigController {
     @RequestMapping(path = IConsts.API_FIND_KEY, method = RequestMethod.GET)
     public ResponseEntity<Object> findByKey(@PathVariable("key") String key) {
         logger.info("Request tof ind config by key. Key: {}",key);
-        List<Config> configList = configService.findByKey(key);
-        return ResponseEntity.status(HttpStatus.OK).body(configList);
+        Config config = configService.findByKey(key);
+        return ResponseEntity.status(HttpStatus.OK).body(config);
     }
     @RequestMapping(path = "/find-by-key-org-id", method = RequestMethod.GET)
     public ResponseEntity<Object> findByKeyAndOrganizationId(@RequestParam(name = "key", required = true) String key,

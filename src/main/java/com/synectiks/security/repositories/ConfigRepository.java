@@ -14,7 +14,7 @@ import java.util.List;
 @SuppressWarnings("unused")
 @Repository
 public interface ConfigRepository extends JpaRepository<Config, Long> {
-    List<Config> findByKey(String key);
+    Config findByKey(String key);
     Config findByKeyAndOrganizationId(String key, Long organizationId);
     List<Config> findByOrganizationId(Long organizationId);
     List<Config> findByCreatedBy(String createdBy);
