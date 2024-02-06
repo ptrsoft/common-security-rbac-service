@@ -7,18 +7,20 @@ import com.synectiks.security.entities.User;
 import com.synectiks.security.interfaces.IApiController;
 import com.synectiks.security.repositories.OrganizationRepository;
 import com.synectiks.security.repositories.UserRepository;
+import com.synectiks.security.service.AppkubeAwsS3Service;
 import com.synectiks.security.service.ConfigService;
 import com.synectiks.security.service.OrganizationService;
+import com.synectiks.security.util.IUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestTemplate;
 
+import java.io.File;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.List;
@@ -48,6 +50,51 @@ public class OrganizationController {
 
     @Autowired
     private ConfigService configService;
+
+    @Autowired
+    private AppkubeAwsS3Service appkubeAwsS3Service;
+
+
+    @GetMapping("/profile-by-id/{id}")
+    public ResponseEntity<Organization> getOrgProfileById(@PathVariable Long id) {
+        logger.debug("Request to get organization and its profile image by id: {}", id);
+        Optional<Organization> oo = organizationService.findOne(id);
+        if(!oo.isPresent()){
+            logger.error("Organization not found");
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
+        }
+        if(StringUtils.isBlank(oo.get().getFileName())){
+            logger.error("Organization does not have profile image");
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
+        }
+        Organization defaultOrganization = organizationService.getOrganizationByName(Constants.DEFAULT_ORGANIZATION);
+        Config configAwsBucket = configService.findByKeyAndOrganizationId(Constants.GLOBAL_AWS_S3_BUCKET_NAME_FOR_ORG_PROFILE_IMAGES, defaultOrganization.getId());
+        Config configAwsBucketFolderLocation = configService.findByKeyAndOrganizationId(Constants.GLOBAL_AWS_S3_FOLDER_LOCATION_FOR_ORG_PROFILE_IMAGES, defaultOrganization.getId());
+        Organization organization = oo.get();
+        File f = appkubeAwsS3Service.downloadFromS3(configAwsBucket.getValue(), configAwsBucketFolderLocation.getValue(), organization.getFileName());
+        organization.setProfileImage(IUtils.convertFileToByteArray(f));
+        return ResponseEntity.status(HttpStatus.OK).body(organization);
+    }
+
+    @GetMapping("/profile-by-name/{name}")
+    public ResponseEntity<Organization> getOrgProfileByName(@PathVariable String name) {
+        logger.debug("Request to get organization and its profile image by name: {}", name);
+        Organization organization = organizationService.getOrganizationByName(name);
+        if(organization == null){
+            logger.error("Organization not found");
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
+        }
+        if(StringUtils.isBlank(organization.getFileName())){
+            logger.error("Organization does not have profile image");
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(null);
+        }
+        Organization defaultOrganization = organizationService.getOrganizationByName(Constants.DEFAULT_ORGANIZATION);
+        Config configAwsBucket = configService.findByKeyAndOrganizationId(Constants.GLOBAL_AWS_S3_BUCKET_NAME_FOR_ORG_PROFILE_IMAGES, defaultOrganization.getId());
+        Config configAwsBucketFolderLocation = configService.findByKeyAndOrganizationId(Constants.GLOBAL_AWS_S3_FOLDER_LOCATION_FOR_ORG_PROFILE_IMAGES, defaultOrganization.getId());
+        File f = appkubeAwsS3Service.downloadFromS3(configAwsBucket.getValue(), configAwsBucketFolderLocation.getValue(), organization.getFileName());
+        organization.setProfileImage(IUtils.convertFileToByteArray(f));
+        return ResponseEntity.status(HttpStatus.OK).body(organization);
+    }
 
 	@GetMapping("/getAllOrganizations")
 	private List<Organization> getAllOrganization() {

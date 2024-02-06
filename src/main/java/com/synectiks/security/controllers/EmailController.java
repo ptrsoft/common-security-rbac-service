@@ -36,19 +36,12 @@ public class EmailController {
     public String sendNewUserRegistrationMail() {
         List<EmailQueue> pendingMails = emailQueueService.findByStatusAndMailType(Constants.STATUS_PENDING, Constants.TYPE_NEW_USER);
         for(EmailQueue emailQueue: pendingMails){
-            emailQueue.setStatus(Constants.STATUS_IN_PROCESS);
-            emailQueue.setUpdatedAt(new Date());
-            emailQueue.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-            emailQueueService.save(emailQueue);
+            updateMailStatus(emailQueue, Constants.STATUS_IN_PROCESS);
             appkubeAwsEmailService.sendNewUserRegistrationMail(emailQueue);
-            emailQueue.setStatus(Constants.STATUS_SENT);
-            emailQueue.setUpdatedAt(new Date());
-            emailQueue.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-            emailQueueService.save(emailQueue);
+            updateMailStatus(emailQueue, Constants.STATUS_SENT);
         }
         return "Congratulations! Your mail has been sent to the user";
     }
-
 
     /**
      * Below spring boot cron job run every 1 minute.
@@ -59,18 +52,19 @@ public class EmailController {
     public String sendNewOrgUserRegistrationMail() {
         List<EmailQueue> pendingMails = emailQueueService.findByStatusAndMailType(Constants.STATUS_PENDING, Constants.TYPE_NEW_ORG_USER_REQUEST);
         for(EmailQueue emailQueue: pendingMails){
-            emailQueue.setStatus(Constants.STATUS_IN_PROCESS);
-            emailQueue.setUpdatedAt(new Date());
-            emailQueue.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
-            emailQueueService.save(emailQueue);
+            updateMailStatus(emailQueue, Constants.STATUS_IN_PROCESS);
             appkubeAwsEmailService.sendNewOrgUserRegistrationMail(emailQueue);
-            emailQueue.setStatus(Constants.STATUS_SENT);
-            emailQueue.setUpdatedAt(new Date());
-            emailQueue.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
+            updateMailStatus(emailQueue, Constants.STATUS_SENT);
         }
         return "Congratulations! Your new org user registration mail has been sent to the user";
     }
 
+    private void updateMailStatus(EmailQueue emailQueue, String statusInProcess) {
+        emailQueue.setStatus(statusInProcess);
+        emailQueue.setUpdatedAt(new Date());
+        emailQueue.setUpdatedBy(Constants.SYSTEM_ACCOUNT);
+        emailQueueService.save(emailQueue);
+    }
 
 //    @RequestMapping("/sendTestMail")
 //	public String sendTestMail() {

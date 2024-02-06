@@ -49,6 +49,16 @@ public class Organization extends PSqlEntity implements Serializable {
     @Column(name = "cmdb_org_id", nullable = true)
     private Long cmdbOrgId;
 
+    @Column(nullable = true)
+    private String fileName;
+
+    @Column(nullable = true)
+    private String fileStorageLocationType;
+
+    @Transient
+    @JsonProperty
+    private byte[] profileImage;
+
     public Long getCmdbOrgId() {
         return cmdbOrgId;
     }
@@ -133,7 +143,31 @@ public class Organization extends PSqlEntity implements Serializable {
 		this.status = status;
 	}
 
-	@Override
+    public String getFileName() {
+        return fileName;
+    }
+
+    public void setFileName(String fileName) {
+        this.fileName = fileName;
+    }
+
+    public String getFileStorageLocationType() {
+        return fileStorageLocationType;
+    }
+
+    public void setFileStorageLocationType(String fileStorageLocationType) {
+        this.fileStorageLocationType = fileStorageLocationType;
+    }
+
+    public byte[] getProfileImage() {
+        return profileImage;
+    }
+
+    public void setProfileImage(byte[] profileImage) {
+        this.profileImage = profileImage;
+    }
+
+    @Override
 	public String toString() {
 		return "Organization [name=" + name + ", description=" + description + ", phone=" + phone + ", email=" + email
 				+ ", address=" + address + ", fax=" + fax + ", dateOfEstablishment=" + dateOfEstablishment + ", status="

@@ -1824,4 +1824,21 @@ public interface IUtils {
 		}
 		return keys;
 	}
+
+    static byte[] convertFileToByteArray(File file) {
+        try (FileInputStream fis = new FileInputStream(file);
+             ByteArrayOutputStream bos = new ByteArrayOutputStream()) {
+
+            byte[] buffer = new byte[1024];
+            int bytesRead;
+
+            while ((bytesRead = fis.read(buffer)) != -1) {
+                bos.write(buffer, 0, bytesRead);
+            }
+            return bos.toByteArray();
+        } catch (IOException e) {
+            e.printStackTrace(); // Handle the exception as needed
+            return null;
+        }
+    }
 }
