@@ -50,7 +50,7 @@ public class EmailController {
     @Scheduled(cron = "0 */1 * ? * *")
     @RequestMapping("/send-new-org-user-registration-mail")
     public String sendNewOrgUserRegistrationMail() {
-        List<EmailQueue> pendingMails = emailQueueService.findByStatusAndMailType(Constants.STATUS_PENDING, Constants.TYPE_NEW_ORG_USER_REQUEST);
+        List<EmailQueue> pendingMails = emailQueueService.findByStatusAndMailType(Constants.STATUS_PENDING, Constants.USER_REQUEST_TYPE_ONLINE);
         for(EmailQueue emailQueue: pendingMails){
             updateMailStatus(emailQueue, Constants.STATUS_IN_PROCESS);
             appkubeAwsEmailService.sendNewOrgUserRegistrationMail(emailQueue);

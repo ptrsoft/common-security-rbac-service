@@ -118,8 +118,15 @@ public class User extends PSqlEntity {
     @Column(nullable = true)
     private String fileStorageLocationType;
 
-//    @Column(nullable = true)
-//    private String fileStorageLocation;
+    @Column(nullable = true)
+    private String status;
+
+    @Column(nullable = true)
+    private String requestType;
+
+    @Column(nullable = true)
+    private String comments;
+
 
 //	public User() {
 //		super();
@@ -392,6 +399,29 @@ public class User extends PSqlEntity {
         this.fileStorageLocationType = fileStorageLocationType;
     }
 
+    public String getStatus() {
+        return status;
+    }
+
+    public void setStatus(String status) {
+        this.status = status;
+    }
+
+    public String getRequestType() {
+        return requestType;
+    }
+
+    public void setRequestType(String requestType) {
+        this.requestType = requestType;
+    }
+
+    public String getComments() {
+        return comments;
+    }
+
+    public void setComments(String comments) {
+        this.comments = comments;
+    }
 
     @Override
     public boolean equals(Object obj) {

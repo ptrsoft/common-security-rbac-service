@@ -32,7 +32,15 @@ public final class Constants {
     public static String STATUS_FAILED = "FAILED";
     public static String STATUS_SENT = "SENT";
     public static String STATUS_IN_PROCESS = "IN_PROCESS";
+    public static String STATUS_ACCEPTED = "ACCEPTED";
+    public static String STATUS_REJECTED = "REJECTED";
+    public static String STATUS_NEW = "NEW";
+    public static String STATUS_LOCKED = "LOCKED";
+    public static String STATUS_TERMINATED = "TERMINATED";
+    public static String STATUS_SUSPENDED = "SUSPENDED";
 
+    public static String APPROVE = "APPROVE";
+    public static String DENY = "DENY";
     public static String TYPE_NEW_USER = "NEW_USER";
 
     public static String DEFAULT_ORGANIZATION = "DEFAULT";
@@ -73,8 +81,14 @@ public final class Constants {
     public static String GLOBAL_SESSION_TIMEOUT = "GLOBAL_SESSION_TIMEOUT";
 
     public static String TYPE_NEW_ORG_USER_REQUEST = "NEW_ORG_USER_REQUEST";
+    public static String USER_REQUEST_TYPE_ONLINE = "ONLINE";
+    public static String USER_REQUEST_TYPE_EMAIL = "EMAIL";
+    public static String USER_REQUEST_TYPE_APPKUBE = "APPKUBE";
+
     public static String SUCCESS = "SUCCESS";
     public static String ERROR = "ERROR";
+
+    public static String ROLE_DEFAULT_USERS = "Default Users";
     private Constants() {
 
     }

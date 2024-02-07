@@ -19,4 +19,5 @@ public interface RoleRepository extends JpaRepository<Role, Long>{// CrudReposit
 	public String findIdByName(String name);
     List<Role> findByCreatedByAndGrp(String createdBy, boolean grp);
     List<Role> findByOrganizationIdAndGrp(Long organizationId, boolean grp);
+    Role findByNameAndGrpAndOrganizationId(String name, boolean grp, Long organizationId);
 }
