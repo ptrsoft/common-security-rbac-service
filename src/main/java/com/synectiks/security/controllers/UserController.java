@@ -1552,6 +1552,12 @@ public class UserController implements IApiController {
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Organization id not provided");
         }
         List<User> userList = userRepository.findByOrganizationIdAndActiveAndRequestType(organizationId, false, Constants.USER_REQUEST_TYPE_ONLINE);
+        Collections.sort(userList, new Comparator<User>() {
+            @Override
+            public int compare(User o1, User o2) {
+                return o2.getCreatedAt().compareTo(o1.getCreatedAt());
+            }
+        });
         Map<String, Object> result = new HashMap<>();
         result.put("organizationId", organizationId);
         result.put("pendingUsers", userList);
@@ -1630,6 +1636,25 @@ public class UserController implements IApiController {
         userRepository.save(user);
         Status st = setMessage(HttpStatus.OK.value(), "SUCCESS", "User status updated", null);
         return ResponseEntity.status(HttpStatus.OK).body(st);
+    }
 
+    @RequestMapping(path = "/get-confirmed-user-requests", method = RequestMethod.GET)
+    public ResponseEntity<Object> getConfirmedUserRequests(@RequestParam Long organizationId) {
+        logger.info("Request to get all users whose request have been accepted to get approved");
+        if (organizationId == null) {
+            logger.error("Organization id not provided");
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body("Organization id not provided");
+        }
+        List<User> userList = userRepository.findByOrganizationIdAndActiveAndRequestTypeAndStatus(organizationId, true, Constants.USER_REQUEST_TYPE_ONLINE, Constants.STATUS_ACCEPTED);
+        Collections.sort(userList, new Comparator<User>() {
+            @Override
+            public int compare(User o1, User o2) {
+                return o2.getUpdatedAt().compareTo(o1.getUpdatedAt());
+            }
+        });
+        Map<String, Object> result = new HashMap<>();
+        result.put("organizationId", organizationId);
+        result.put("confirmedUsers", userList);
+        return ResponseEntity.status(HttpStatus.OK).body(result);
     }
 }

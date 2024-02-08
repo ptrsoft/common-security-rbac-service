@@ -32,5 +32,6 @@ public interface UserRepository extends JpaRepository<User, Long>{//,	IUserRepos
 
     List<User> findByOrganizationIdAndActive(Long organizationId, boolean active);
     List<User> findByOrganizationIdAndActiveAndRequestType(Long organizationId, boolean active, String requestType);
+    List<User> findByOrganizationIdAndActiveAndRequestTypeAndStatus(Long organizationId, boolean active, String requestType, String status);
     List<User> findByUpdatedByAndActive(String updatedBy, boolean active);
 }
