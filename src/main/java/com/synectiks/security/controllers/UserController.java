@@ -1454,6 +1454,9 @@ public class UserController implements IApiController {
             }
             userList.add(user);
         }
+        for (User user1 : userList) {
+            user1.setRoles(Collections.emptyList());
+        }
         userData.put("isAdmin", isAdmin);
         userData.put("roleGroups", roleGrpList);
         userData.put("roles", roleList);
@@ -1462,6 +1465,13 @@ public class UserController implements IApiController {
         userData.put("permissionCategories", permissionCategoryList);
         return ResponseEntity.status(HttpStatus.OK).body(userData);
     }
+
+//    private void setOwnerRolesNull(User user){
+//        if(user.getOwner() != null){
+//            user.getOwner().setRoles(Collections.emptyList());
+//            setOwnerRolesNull(user.getOwner());
+//        }
+//    }
 
     private void addAllowedAndDisAllowedPermissions(List<Role> roleGrpList) {
         Map<Long, Permission> allPermissions = new HashMap<>();
