@@ -1406,8 +1406,8 @@ public class UserController implements IApiController {
         }
         if (isAdmin) {
             logger.info("User type is {}", user.getType());
-            roleGrpList.addAll(roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, true));
-            roleList.addAll(roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, false));
+//            roleGrpList.addAll(roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, true));
+//            roleList.addAll(roleRepository.findByCreatedByAndGrp(Constants.SYSTEM_ACCOUNT, false));
 
             roleGrpList.addAll(roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), true));
             roleList.addAll(roleRepository.findByOrganizationIdAndGrp(user.getOrganization().getId(), false));
@@ -1418,10 +1418,10 @@ public class UserController implements IApiController {
                     obj.setProfileImage(downloadFileFromS3(obj.getFileName()));
                 }
             }
-            policyList.addAll(policyRepository.findByCreatedBy(Constants.SYSTEM_ACCOUNT));
+//            policyList.addAll(policyRepository.findByCreatedBy(Constants.SYSTEM_ACCOUNT));
             policyList.addAll(policyRepository.findByOrganizationId(user.getOrganization().getId()));
 
-            permissionCategoryList.addAll(permissionCategoryRepository.findByCreatedBy(Constants.SYSTEM_ACCOUNT));
+//            permissionCategoryList.addAll(permissionCategoryRepository.findByCreatedBy(Constants.SYSTEM_ACCOUNT));
             permissionCategoryList.addAll(permissionCategoryRepository.findByOrganizationId(user.getOrganization().getId()));
 
             addUsersToRoleGroup(roleGrpList, userList);
@@ -1647,5 +1647,21 @@ public class UserController implements IApiController {
         result.put("organizationId", organizationId);
         result.put("confirmedUsers", userList);
         return ResponseEntity.status(HttpStatus.OK).body(result);
+    }
+
+
+    @RequestMapping(path = "/get-user-password", method = RequestMethod.GET)
+    public ResponseEntity<Object> getUserPassword(@RequestParam String userName) {
+        User user = this.userRepository.findByUsername(userName);
+        if (user == null) {
+            logger.error("User not found. User Name: {}", userName);
+            Status st = setMessage(HttpStatus.EXPECTATION_FAILED.value(), "ERROR", "User not found. User Name: " + userName, null);
+            return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(st);
+        }
+        Map<String, String> data = new HashMap<>();
+        data.put("user", userName);
+        data.put("isActive", String.valueOf(user.isActive()));
+        data.put("password", EncryptionDecription.decrypt(user.getEncPassword()));
+        return ResponseEntity.status(HttpStatus.OK).body(data);
     }
 }
