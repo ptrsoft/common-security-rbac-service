@@ -240,6 +240,9 @@ public class UserController implements IApiController {
             logger.info("Pushing new user registration mail to email_queue");
             setNewUserMailToQueue(user, Constants.TYPE_NEW_USER);
         }
+        if(Constants.UserCache.containsKey(user.getUsername())){
+            Constants.UserCache.remove(user.getUsername());
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(user);
     }
 
@@ -299,6 +302,9 @@ public class UserController implements IApiController {
         logger.info("Pushing new org user request mail to email_queue");
         setNewUserMailToQueue(user, Constants.USER_REQUEST_TYPE_ONLINE);
         Status st = setMessage(HttpStatus.CREATED.value(), Constants.SUCCESS, "New org user request saved.", null);
+        if(Constants.UserCache.containsKey(user.getUsername())){
+            Constants.UserCache.remove(user.getUsername());
+        }
         return ResponseEntity.status(HttpStatus.CREATED).body(st);
     }
 
@@ -365,7 +371,11 @@ public class UserController implements IApiController {
     @RequestMapping(IConsts.API_DELETE_ID)
     public ResponseEntity<Object> deleteById(@PathVariable("id") Long id) {
         try {
+            Optional<User> oUser = userRepository.findById(id);
             userRepository.deleteById(id);
+            if(oUser.isPresent() && Constants.UserCache.containsKey(oUser.get().getUsername())){
+                Constants.UserCache.remove(oUser.get().getUsername());
+            }
         } catch (Throwable th) {
             logger.error(th.getMessage(), th);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
@@ -467,6 +477,9 @@ public class UserController implements IApiController {
         logger.info("Updating user: ");
         userRepository.save(existingUser);
         Status st = setMessage(HttpStatus.OK.value(), "SUCCESS", "User updated successfully", existingUser);
+        if(Constants.UserCache.containsKey(existingUser.getUsername())){
+            Constants.UserCache.remove(existingUser.getUsername());
+        }
         return ResponseEntity.status(HttpStatus.OK).body(st);
     }
 
@@ -646,6 +659,9 @@ public class UserController implements IApiController {
             logger.error("Update organization failed. Exception: ", th);
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(th);
         }
+        if(Constants.UserCache.containsKey(user.getUsername())){
+            Constants.UserCache.remove(user.getUsername());
+        }
         return ResponseEntity.status(HttpStatus.OK).body(user);
     }
 
@@ -661,6 +677,9 @@ public class UserController implements IApiController {
             st.setType("ERROR");
             st.setMessage("Assign role groups to user failed");
             return ResponseEntity.status(HttpStatus.EXPECTATION_FAILED).body(e);
+        }
+        if(Constants.UserCache.containsKey(user.getUsername())){
+            Constants.UserCache.remove(user.getUsername());
         }
         return ResponseEntity.status(HttpStatus.OK).body(user);
     }
@@ -687,6 +706,9 @@ public class UserController implements IApiController {
             st.setType("SUCCESS");
             st.setMessage("User's role updated successfully");
             st.setObject(user);
+            if(Constants.UserCache.containsKey(user.getUsername())){
+                Constants.UserCache.remove(user.getUsername());
+            }
             return ResponseEntity.status(HttpStatus.OK).body(st);
         } catch (Exception e) {
             logger.error("Updating user's role failed. Exception: ", e);
@@ -736,6 +758,9 @@ public class UserController implements IApiController {
                     logger.debug("Adding user: {} to role group: {}", user.getUsername(), oRole.get().getName());
                     user.getRoles().add(oRole.get());
                     userRepository.save(user);
+                    if(Constants.UserCache.containsKey(user.getUsername())){
+                        Constants.UserCache.remove(user.getUsername());
+                    }
                 }
             }
         }
@@ -1201,6 +1226,9 @@ public class UserController implements IApiController {
 
         userRepository.save(user);
         Token.remove(userName);
+        if(Constants.UserCache.containsKey(user.getUsername())){
+            Constants.UserCache.remove(user.getUsername());
+        }
         Status st = setMessage(HttpStatus.OK.value(), "SUCCESS", "Password changed successfully: ", null);
         return ResponseEntity.status(HttpStatus.OK).body(st);
     }
@@ -1250,6 +1278,9 @@ public class UserController implements IApiController {
         user.setEncPassword((EncryptionDecription.encrypt(newPassword)));
         userRepository.save(user);
         Status st = setMessage(HttpStatus.OK.value(), "SUCCESS", "Password changed successfully: ", null);
+        if(Constants.UserCache.containsKey(user.getUsername())){
+            Constants.UserCache.remove(user.getUsername());
+        }
         return ResponseEntity.status(HttpStatus.OK).body(st);
     }
 
@@ -1274,6 +1305,9 @@ public class UserController implements IApiController {
 
         userRepository.save(user);
         Status st = setMessage(HttpStatus.OK.value(), "SUCCESS", "Password changed successfully: ", null);
+        if(Constants.UserCache.containsKey(user.getUsername())){
+            Constants.UserCache.remove(user.getUsername());
+        }
         return ResponseEntity.status(HttpStatus.OK).body(st);
     }
 
@@ -1385,6 +1419,10 @@ public class UserController implements IApiController {
     @RequestMapping(path = "/get-user-hierarchy", method = RequestMethod.GET)
     public ResponseEntity<Object> getUserHierarchy(@RequestParam String userName) {
         logger.info("Request to get user hierarchy");
+        if(Constants.UserCache.containsKey(userName)){
+            logger.info("Getting user data from cache");
+            return ResponseEntity.status(HttpStatus.OK).body(Constants.UserCache.get(userName));
+        }
         User user = this.userRepository.findByUsername(userName);
         if (user == null) {
             logger.error("User not found. user name: {}", userName);
@@ -1461,6 +1499,7 @@ public class UserController implements IApiController {
         userData.put("policies", policyList);
         userData.put("users", userList);
         userData.put("permissionCategories", permissionCategoryList);
+        Constants.UserCache.put(userName, userData);
         return ResponseEntity.status(HttpStatus.OK).body(userData);
     }
 

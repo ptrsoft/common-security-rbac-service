@@ -1,5 +1,8 @@
 package com.synectiks.security.config;
 
+import java.util.HashMap;
+import java.util.Map;
+
 /**
  * Application constants.
  */
@@ -92,4 +95,5 @@ public final class Constants {
     private Constants() {
 
     }
+    public static Map<String, Object> UserCache = new HashMap<>();
 }
