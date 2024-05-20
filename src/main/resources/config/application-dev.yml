@@ -59,14 +59,14 @@ spring:
   application:
     name: security
   datasource:
-    url: jdbc:postgresql://postgresql.ch8wfucynpvq.us-east-1.rds.amazonaws.com:5431/security
+    url: jdbc:postgresql://213.210.36.2:5432/security
     username: postgres
-    password: Synect!ks2023
+    password: postgres
   flyway:
     enabled: true
-    url: jdbc:postgresql://postgresql.ch8wfucynpvq.us-east-1.rds.amazonaws.com:5431/security
+    url: jdbc:postgresql://213.210.36.2:5432/security
     user: postgres
-    password: Synect!ks2023
+    password: postgres
     locations: classpath:dbscript
     group: true
   profiles:
@@ -132,6 +132,9 @@ server:
 info:
   # Comma separated list of profiles that will trigger the ribbon to show
   display-ribbon-on-profiles: 'dev'
+
+ptr-cmdb-service:
+  url: http://localhost:6057/api
 
 # ===================================================================
 # JHipster specific properties
