@@ -59,12 +59,12 @@ spring:
   application:
     name: security
   datasource:
-    url: jdbc:postgresql://localhost:5432/ptrsecurity
+    url: jdbc:postgresql://localhost:5432/security
     username: postgres
     password: postgres
   flyway:
     enabled: true
-    url: jdbc:postgresql://localhost:5432/ptrsecurity
+    url: jdbc:postgresql://localhost:5432/security
     user: postgres
     password: postgres
     locations: classpath:dbscript
